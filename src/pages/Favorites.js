@@ -3,7 +3,7 @@ import { collection, getDocs, query, where, documentId } from 'firebase/firestor
 import { db, auth } from '../firebase';
 import { useNavigate } from 'react-router-dom';
 import { getUserFavorites, removeFromFavorites } from '../favoritesService';
-import { HiHeart } from 'react-icons/hi2';
+import { HiHeart } from 'react-icons/hi';
 import LoadingSpinner from '../components/LoadingSpinner';
 import './Favorites.css';
 
