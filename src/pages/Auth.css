@@ -1,0 +1,118 @@
+.auth-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #f5f3ef 0%, #e8e4db 100%);
+  padding: 20px;
+}
+
+.auth-box {
+  background: white;
+  padding: 48px;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  max-width: 440px;
+  width: 100%;
+}
+
+.auth-box h1 {
+  font-family: 'Playfair Display', serif;
+  color: #7D5E4F;
+  font-size: 32px;
+  margin-bottom: 8px;
+  text-align: center;
+  font-weight: 700;
+}
+
+.auth-box h2 {
+  color: #7d6e57;
+  font-size: 18px;
+  margin-bottom: 32px;
+  text-align: center;
+  font-weight: 500;
+}
+
+.auth-box form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.auth-box input {
+  padding: 16px;
+  border: 2px solid #e8e4db;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: all 0.3s;
+  font-family: 'Inter', sans-serif;
+}
+
+.auth-box input:focus {
+  outline: none;
+  border-color: #7d6e57;
+  box-shadow: 0 0 0 3px rgba(125, 110, 87, 0.1);
+}
+
+.auth-box button {
+  padding: 16px;
+  background: linear-gradient(135deg, #7D5E4F 0%, #7d6e57 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-top: 8px;
+}
+
+.auth-box button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(93, 78, 55, 0.3);
+}
+
+.auth-box button:disabled {
+  background: #9d8e77;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.error {
+  color: #d32f2f;
+  font-size: 14px;
+  margin: 0;
+  padding: 12px;
+  background: #ffebee;
+  border-radius: 8px;
+  border-left: 4px solid #d32f2f;
+}
+
+.auth-link {
+  text-align: center;
+  margin-top: 24px;
+  color: #7d6e57;
+  font-size: 14px;
+}
+
+.auth-link a {
+  color: #7D5E4F;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.auth-link a:hover {
+  color: #4a3d2a;
+  text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+  .auth-box {
+    padding: 32px 24px;
+  }
+
+  .auth-box h1 {
+    font-size: 26px;
+  }
+}

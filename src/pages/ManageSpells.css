@@ -1,0 +1,244 @@
+.manage-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  background: #f5f3ef;
+  min-height: 100vh;
+}
+
+.manage-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.manage-header h1 {
+  color: #7D5E4F;
+  font-size: 36px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  color: #7d6e57;
+  font-size: 16px;
+}
+
+.manage-actions {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 32px;
+  align-items: center;
+}
+
+.manage-actions .search-bar {
+  flex: 1;
+  padding: 14px;
+  border: 2px solid #e8e4db;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+.manage-actions .search-bar:focus {
+  outline: none;
+  border-color: #7d6e57;
+}
+
+.add-new-btn {
+  padding: 14px 24px;
+  background: #7D5E4F;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.3s;
+}
+
+.add-new-btn:hover {
+  background: #4a3d2a;
+}
+
+.spells-table {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.spell-row {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  position: relative;
+}
+
+.spell-info {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.spell-thumbnail {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.spell-details {
+  flex: 1;
+}
+
+.spell-details h3 {
+  color: #7D5E4F;
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+
+.spell-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  background: #e8e4db;
+  color: #7D5E4F;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge.premium {
+  background: #7D5E4F;
+  color: white;
+}
+
+.spell-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.edit-btn,
+.view-btn,
+.delete-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.edit-btn {
+  background: #7D5E4F;
+  color: white;
+}
+
+.edit-btn:hover {
+  background: #4a3d2a;
+}
+
+.view-btn {
+  background: #7d6e57;
+  color: white;
+}
+
+.view-btn:hover {
+  background: #6b5d49;
+}
+
+.delete-btn {
+  background: #d32f2f;
+  color: white;
+}
+
+.delete-btn:hover {
+  background: #b71c1c;
+}
+
+.delete-confirm {
+  margin-top: 16px;
+  padding: 16px;
+  background: #ffebee;
+  border-radius: 8px;
+  border-left: 4px solid #d32f2f;
+}
+
+.delete-confirm p {
+  color: #d32f2f;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.confirm-yes,
+.confirm-no {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.confirm-yes {
+  background: #d32f2f;
+  color: white;
+}
+
+.confirm-yes:hover {
+  background: #b71c1c;
+}
+
+.confirm-no {
+  background: #e8e4db;
+  color: #7D5E4F;
+}
+
+.confirm-no:hover {
+  background: #d4cfc3;
+}
+
+.no-results {
+  text-align: center;
+  padding: 60px 20px;
+  color: #7d6e57;
+}
+
+.loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: #7d6e57;
+  font-size: 18px;
+}
+
+@media (max-width: 768px) {
+  .manage-actions {
+    flex-direction: column;
+  }
+  
+  .add-new-btn {
+    width: 100%;
+  }
+  
+  .spell-info {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .spell-actions {
+    flex-wrap: wrap;
+  }
+}
