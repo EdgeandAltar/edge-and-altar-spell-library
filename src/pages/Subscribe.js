@@ -1,4 +1,4 @@
-import { HiOutlineBookOpen, HiOutlineCheckCircle, HiOutlineRefresh, HiOutlineSparkles } from 'react-icons/hi2';
+import { HiOutlineBookOpen, HiOutlineCheckCircle, HiOutlineArrowPath, HiOutlineSparkles } from 'react-icons/hi2';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../firebase';
@@ -152,7 +152,7 @@ function Subscribe() {
             <p>From 5-minute morning rituals to deep ceremonial work</p>
           </div>
           <div className="benefit">
-            <div className="benefit-icon"><HiOutlineRefresh /></div>
+            <div className="benefit-icon"><HiOutlineArrowPath /></div>
             <h4>Always Growing</h4>
             <p>New spells added every month, yours to keep forever</p>
           </div>
