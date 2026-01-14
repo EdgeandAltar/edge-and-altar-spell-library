@@ -1,4 +1,4 @@
-import { HiOutlineBookOpen, HiOutlineCheckCircle, HiOutlineRefresh, HiOutlineSparkles } from 'react-icons/hi';
+import { HiOutlineBookOpen, HiOutlineCheckCircle, HiOutlineRefresh, HiOutlineSparkles } from 'react-icons/hi22';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../firebase';

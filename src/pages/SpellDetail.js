@@ -6,7 +6,7 @@ import { getUserSubscription } from '../userService';
 import { getUserFavorites, addToFavorites, removeFromFavorites, isSpellFavorited } from '../favoritesService';
 import { addJournalEntry } from '../journalService';
 import { generateSpellPDF } from '../pdfService';
-import { HiOutlineHeart, HiHeart, HiOutlineDownload, HiOutlinePencilAlt } from 'react-icons/hi';
+import { HiOutlineHeart, HiHeart, HiOutlineDownload, HiOutlinePencilAlt } from 'react-icons/hi2';
 import LoadingSpinner from '../components/LoadingSpinner';
 import './SpellDetail.css';
 

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
-import { HiChevronDown } from 'react-icons/hi';
+import { HiChevronDown } from 'react-icons/hi2';
 import './Navigation.css';
 
 function Navigation({ user, isAdmin }) {

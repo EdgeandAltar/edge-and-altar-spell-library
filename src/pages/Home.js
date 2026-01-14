@@ -1,4 +1,4 @@
-import { HiOutlineSearch, HiOutlineLightningBolt, HiOutlineMoon, HiOutlineDeviceMobile, HiOutlineSparkles, HiOutlineHeart } from 'react-icons/hi';
+import { HiOutlineSearch, HiOutlineLightningBolt, HiOutlineMoon, HiOutlineDeviceMobile, HiOutlineSparkles, HiOutlineHeart } from 'react-icons/hi2';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getUserSubscription } from '../userService';

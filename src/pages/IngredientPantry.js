@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../firebase';
 import { getUserPantry, addToPantry, removeFromPantry, COMMON_INGREDIENTS } from '../pantryService';
-import { HiOutlineX, HiOutlinePlus } from 'react-icons/hi';
+import { HiOutlineX, HiOutlinePlus } from 'react-icons/hi2';
 import './IngredientPantry.css';
 
 function IngredientPantry() {
