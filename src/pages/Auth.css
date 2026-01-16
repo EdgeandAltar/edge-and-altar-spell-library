@@ -116,3 +116,9 @@
     font-size: 26px;
   }
 }
+
+.success {
+  color: #2ecc71;
+  margin-top: 10px;
+  font-size: 14px;
+}

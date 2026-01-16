@@ -1,45 +1,69 @@
-import React, { useState } from 'react';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../firebase';
-import { useNavigate, Link } from 'react-router-dom';
-import { createUserDocument } from '../userService';
-import './Auth.css';
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { supabase } from "../supabaseClient";
+import "./Auth.css";
 
 function Signup() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
 
   const handleSignup = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
-    // Check if passwords match
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError("Passwords do not match");
       return;
     }
 
-    // Check password length
     if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+      setError("Password must be at least 6 characters");
       return;
     }
 
     setLoading(true);
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      await createUserDocument(userCredential.user);
-      navigate('/'); // Redirect to home after signup
-    } catch (error) {
-      setError(error.message);
+      const { data, error: signUpErr } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      if (signUpErr) throw signUpErr;
+
+      // ✅ If email confirmations are ON, user may not have a session yet
+      const user = data?.user;
+
+      if (!user) {
+        // This can happen if confirmations are enabled and Supabase returns minimal payload
+        navigate("/login");
+        return;
+      }
+
+      // ✅ Create a profile row (so access_level + is_admin exists)
+      // NOTE: This requires RLS policy that allows insert for the signed-in user.
+      const { error: profileErr } = await supabase.from("profiles").upsert({
+        id: user.id,
+        email: user.email,
+        access_level: "free",
+        is_admin: false,
+      });
+
+      if (profileErr) {
+        console.warn("Profile upsert failed (not fatal):", profileErr.message);
+      }
+
+      navigate("/");
+    } catch (err) {
+      setError(err.message || "Signup failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   return (
@@ -47,7 +71,7 @@ function Signup() {
       <div className="auth-box">
         <h1>Edge & Altar</h1>
         <h2>Create Account</h2>
-        
+
         <form onSubmit={handleSignup}>
           <input
             type="email"
@@ -56,7 +80,7 @@ function Signup() {
             onChange={(e) => setEmail(e.target.value)}
             required
           />
-          
+
           <input
             type="password"
             placeholder="Password (min 6 characters)"
@@ -64,7 +88,7 @@ function Signup() {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-          
+
           <input
             type="password"
             placeholder="Confirm Password"
@@ -72,14 +96,14 @@ function Signup() {
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
           />
-          
+
           {error && <p className="error">{error}</p>}
-          
+
           <button type="submit" disabled={loading}>
-            {loading ? 'Creating account...' : 'Sign Up'}
+            {loading ? "Creating account..." : "Sign Up"}
           </button>
         </form>
-        
+
         <p className="auth-link">
           Already have an account? <Link to="/login">Sign in</Link>
         </p>

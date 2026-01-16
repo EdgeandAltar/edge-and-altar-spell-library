@@ -1,334 +1,240 @@
 /**
- * Firebase Functions (v2) — Stripe checkout + webhook + backfill slugs
- * Rewritten cleanly so you can copy/paste the whole file.
+ * Firebase Functions (Gen 1) — Stripe ONE-TIME Checkout + Verify + Backfill Slugs
+ * ✅ No public HTTP endpoints
+ * ✅ No Cloud Run invoker/IAM headaches
+ * ✅ Works cleanly with httpsCallable from React
  */
 
 const admin = require("firebase-admin");
-const { onCall, onRequest, HttpsError } = require("firebase-functions/v2/https");
-const { setGlobalOptions } = require("firebase-functions/v2/options");
-const { defineSecret } = require("firebase-functions/params");
+const functions = require("firebase-functions"); // v1
 const logger = require("firebase-functions/logger");
-const cors = require("cors")({ origin: true });
 
 admin.initializeApp();
-setGlobalOptions({ region: "us-central1" });
 
-// ---- Secrets (v2) ----
-const STRIPE_SECRET_KEY = defineSecret("STRIPE_SECRET_KEY");
-const STRIPE_WEBHOOK_SECRET = defineSecret("STRIPE_WEBHOOK_SECRET");
-const APP_URL = defineSecret("APP_URL");
+// --------------------
+// Config / Secrets
+// --------------------
+// Use Secret Manager if you have it wired, otherwise use functions:config().
+// To keep this copy/paste safe, we support BOTH:
+//
+// Preferred (Gen 2 style Secret Manager values exposed via environment):
+//   process.env.STRIPE_SECRET_KEY
+//   process.env.APP_URL
+//
+// Fallback (Gen 1 config):
+//   firebase functions:config:set stripe.secret_key="..." app.url="..."
+//   then deploy
 
-// ---- Price IDs ----
-// IMPORTANT: These must match the SAME Stripe mode as STRIPE_SECRET_KEY (test with sk_test_ uses test-mode price ids)
-const MONTHLY_PRICE_ID = "price_1SpB9oPTSAVNLRQWKl3ddjPj";
-const ANNUAL_PRICE_ID = "price_1SpB9oPTSAVNLRQWKwND4Tnh";
+function mustGetEnvOrConfig(keyPath, fallbackPath) {
+  // keyPath example: "STRIPE_SECRET_KEY"
+  const envVal = process.env[keyPath];
+  if (envVal) return envVal;
+
+  // fallbackPath example: ["stripe","secret_key"]
+  let cfg = functions.config();
+  for (const k of fallbackPath) cfg = cfg?.[k];
+  if (cfg) return cfg;
+
+  throw new Error(
+    `Missing ${keyPath}. Set it as an env var OR via functions:config:set ${fallbackPath.join(
+      "."
+    )}=...`
+  );
+}
 
 function getStripeClient() {
-  const key = STRIPE_SECRET_KEY.value();
+  const key = mustGetEnvOrConfig("STRIPE_SECRET_KEY", ["stripe", "secret_key"]);
   return require("stripe")(key);
 }
 
-// ------------------------------------------------------------
-// Callable: Create Checkout Session (keep if you want)
-// ------------------------------------------------------------
-exports.createCheckoutSession = onCall(
-  { secrets: [STRIPE_SECRET_KEY, APP_URL] },
-  async (request) => {
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "You must be logged in.");
+// ---- One-time Price ID (set to your Stripe ONE-TIME price) ----
+const LIFETIME_PRICE_ID = "price_REPLACE_ME";
+
+// --------------------
+// Callable: Create ONE-TIME Stripe Checkout Session
+// --------------------
+exports.createOneTimeCheckoutSession = functions
+  .region("us-central1")
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "You must be logged in."
+      );
     }
 
-    const uid = request.auth.uid;
-    const plan = request.data?.plan;
+    const uid = context.auth.uid;
+    const email = context.auth.token?.email || undefined;
 
-    if (!["monthly", "annual"].includes(plan)) {
-      throw new HttpsError("invalid-argument", "plan must be 'monthly' or 'annual'.");
-    }
+    const appUrl = mustGetEnvOrConfig("APP_URL", ["app", "url"]);
 
-    const priceId = plan === "monthly" ? MONTHLY_PRICE_ID : ANNUAL_PRICE_ID;
-
-    const appUrl = APP_URL.value();
-    if (!appUrl) {
-      throw new HttpsError("failed-precondition", "APP_URL is not set.");
+    if (!LIFETIME_PRICE_ID || LIFETIME_PRICE_ID.includes("REPLACE_ME")) {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "Set LIFETIME_PRICE_ID in functions/index.js"
+      );
     }
 
     const stripe = getStripeClient();
-    const email = request.auth.token?.email || undefined;
 
     const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      line_items: [{ price: priceId, quantity: 1 }],
-      // map Stripe -> Firebase user
+      mode: "payment",
+      line_items: [{ price: LIFETIME_PRICE_ID, quantity: 1 }],
       client_reference_id: uid,
-      metadata: { firebaseUID: uid, plan },
+      metadata: { firebaseUID: uid, purchaseType: "lifetime" },
       customer_email: email,
-      success_url: `${appUrl}/success`,
+      allow_promotion_codes: true,
+      success_url: `${appUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}/subscribe?canceled=true`,
     });
 
     return { url: session.url };
-  }
-);
+  });
 
-// ------------------------------------------------------------
-// HTTP: Create Checkout Session (EASIEST for debugging; use fetch())
-// Frontend: POST with Authorization: Bearer <firebase id token>
-// ------------------------------------------------------------
-exports.createCheckoutSessionHttp = onRequest(
-  { secrets: [STRIPE_SECRET_KEY, APP_URL], invoker: "public" },
-  (req, res) => {
-    cors(req, res, async () => {
-      try {
-        // Handle CORS preflight
-        if (req.method === "OPTIONS") return res.status(204).send("");
-        if (req.method !== "POST") return res.status(405).send("Method not allowed");
+// --------------------
+// Callable: Verify Checkout Session + Grant Premium
+// --------------------
+exports.verifyOneTimeCheckoutSession = functions
+  .region("us-central1")
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "You must be logged in."
+      );
+    }
 
-        const authHeader = req.headers.authorization || "";
-        const match = authHeader.match(/^Bearer (.+)$/);
-        if (!match) return res.status(401).send("Missing Authorization Bearer token");
+    const uid = context.auth.uid;
+    const sessionId = data?.sessionId;
 
-        const idToken = match[1];
-        const decoded = await admin.auth().verifyIdToken(idToken);
-        const uid = decoded.uid;
-        const email = decoded.email || undefined;
+    if (!sessionId || typeof sessionId !== "string") {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "sessionId is required."
+      );
+    }
 
-        const { plan } = req.body || {};
-        if (!["monthly", "annual"].includes(plan)) {
-          return res.status(400).send("plan must be 'monthly' or 'annual'");
-        }
+    const stripe = getStripeClient();
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
 
-        const priceId = plan === "monthly" ? MONTHLY_PRICE_ID : ANNUAL_PRICE_ID;
+    const sessionUid =
+      session.client_reference_id || session.metadata?.firebaseUID || null;
 
-        const appUrl = APP_URL.value();
-        if (!appUrl) return res.status(500).send("APP_URL is not set");
+    if (sessionUid !== uid) {
+      throw new functions.https.HttpsError(
+        "permission-denied",
+        "This checkout session does not belong to this user."
+      );
+    }
 
-        const stripe = getStripeClient();
+    if (session.payment_status !== "paid") {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        `Payment not complete. payment_status=${session.payment_status}`
+      );
+    }
 
-        const session = await stripe.checkout.sessions.create({
-          mode: "subscription",
-          line_items: [{ price: priceId, quantity: 1 }],
-          client_reference_id: uid,
-          metadata: { firebaseUID: uid, plan },
-          customer_email: email,
-          success_url: `${appUrl}/success`,
-          cancel_url: `${appUrl}/subscribe?canceled=true`,
-        });
+    await admin.firestore().doc(`users/${uid}`).set(
+      {
+        accessLevel: "premium",
+        subscriptionStatus: "premium", // keep for UI compatibility
+        purchasedAt: admin.firestore.FieldValue.serverTimestamp(),
+        stripeCheckoutSessionId: session.id,
+        stripePaymentIntentId: session.payment_intent || null,
+        premiumSource: "stripe_one_time",
+      },
+      { merge: true }
+    );
 
-        return res.status(200).json({ url: session.url });
-      } catch (err) {
-        logger.error("createCheckoutSessionHttp error", err);
-        return res.status(500).send("Failed to create checkout session");
-      }
+    logger.info("Granted lifetime premium access", {
+      uid,
+      sessionId: session.id,
     });
-  }
-);
 
-// ------------------------------------------------------------
-// HTTP: Stripe Webhook
-// ------------------------------------------------------------
-exports.stripeWebhook = onRequest(
-  { secrets: [STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET], invoker: "public" },
-  (req, res) => {
-    cors(req, res, async () => {
-      const stripe = getStripeClient();
-      const sig = req.headers["stripe-signature"];
-      const webhookSecret = STRIPE_WEBHOOK_SECRET.value();
+    return { ok: true };
+  });
 
-      if (!sig || !webhookSecret) {
-        logger.error("Missing stripe-signature header or webhook secret");
-        return res.status(400).send("Missing signature");
+// --------------------
+// Callable: Backfill Spell Slugs
+// --------------------
+exports.backfillSpellSlugs = functions
+  .region("us-central1")
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Login required."
+      );
+    }
+
+    const slugify = (text = "") =>
+      text
+        .toLowerCase()
+        .trim()
+        .replace(/['"]/g, "")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+
+    const makeUniqueSlug = (base, usedSet) => {
+      let slug = base;
+      let i = 2;
+      while (usedSet.has(slug)) {
+        slug = `${base}-${i}`;
+        i += 1;
       }
+      usedSet.add(slug);
+      return slug;
+    };
 
-      let event;
-      try {
-        // IMPORTANT: Use rawBody for signature verification
-        event = stripe.webhooks.constructEvent(req.rawBody, sig, webhookSecret);
-      } catch (err) {
-        logger.error("Webhook signature verification failed", err);
-        return res.status(400).send(`Webhook Error: ${err.message}`);
-      }
+    const db = admin.firestore();
+    const snap = await db.collection("spells").get();
+    if (snap.empty) return { updated: 0, message: "No spells found." };
 
-      logger.info("Stripe webhook received", {
-        eventId: event.id,
-        eventType: event.type,
+    const usedSlugs = new Set();
+    snap.docs.forEach((doc) => {
+      const existing = (doc.data()?.slug || "").toString().trim();
+      if (existing) usedSlugs.add(existing);
+    });
+
+    const updates = [];
+    snap.docs.forEach((doc) => {
+      const data = doc.data() || {};
+      const title = (data.title || "").toString().trim();
+      const currentSlug = (data.slug || "").toString().trim();
+      if (!title || currentSlug) return;
+
+      const base = slugify(title);
+      if (!base) return;
+
+      const uniqueSlug = makeUniqueSlug(base, usedSlugs);
+      updates.push({ ref: doc.ref, slug: uniqueSlug });
+    });
+
+    if (updates.length === 0) {
+      return { updated: 0, message: "All spells already had slugs." };
+    }
+
+    const chunkSize = 450;
+    let updatedCount = 0;
+
+    for (let i = 0; i < updates.length; i += chunkSize) {
+      const chunk = updates.slice(i, i + chunkSize);
+      const batch = db.batch();
+
+      chunk.forEach((u) => {
+        batch.set(
+          u.ref,
+          { slug: u.slug, updatedAt: admin.firestore.FieldValue.serverTimestamp() },
+          { merge: true }
+        );
       });
 
-      try {
-        switch (event.type) {
-          case "checkout.session.completed": {
-            let session = event.data.object;
-
-            let uid = session.client_reference_id || session.metadata?.firebaseUID;
-
-            // Fallback: fetch full session if UID missing
-            if (!uid && session.id) {
-              logger.warn("UID missing on event session; fetching session from Stripe", {
-                sessionId: session.id,
-              });
-
-              const fetched = await stripe.checkout.sessions.retrieve(session.id);
-              session = fetched;
-              uid = session.client_reference_id || session.metadata?.firebaseUID;
-            }
-
-            if (!uid) {
-              logger.warn("checkout.session.completed: still missing uid after fetch", {
-                sessionId: session?.id,
-                hasMetadata: !!session?.metadata,
-                clientRef: session?.client_reference_id || null,
-              });
-              break;
-            }
-
-            await admin.firestore().doc(`users/${uid}`).set(
-              {
-                subscriptionStatus: "premium",
-                stripeCustomerId: session.customer || null,
-                stripeSubscriptionId: session.subscription || null,
-                subscriptionUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
-              },
-              { merge: true }
-            );
-
-            logger.info("Upgraded user to premium", {
-              uid,
-              stripeCustomerId: session.customer || null,
-              stripeSubscriptionId: session.subscription || null,
-              sessionId: session.id,
-            });
-
-            break;
-          }
-
-          case "customer.subscription.deleted": {
-            const subscription = event.data.object;
-
-            const snap = await admin
-              .firestore()
-              .collection("users")
-              .where("stripeSubscriptionId", "==", subscription.id)
-              .limit(1)
-              .get();
-
-            if (!snap.empty) {
-              await snap.docs[0].ref.set(
-                {
-                  subscriptionStatus: "free",
-                  subscriptionUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
-                },
-                { merge: true }
-              );
-
-              logger.info("Downgraded user to free", {
-                userDoc: snap.docs[0].id,
-                stripeSubscriptionId: subscription.id,
-              });
-            } else {
-              logger.warn("No user found for deleted subscription", {
-                stripeSubscriptionId: subscription.id,
-              });
-            }
-
-            break;
-          }
-
-          default:
-            logger.info("Unhandled Stripe event type", { eventType: event.type });
-            break;
-        }
-
-        return res.json({ received: true });
-      } catch (err) {
-        logger.error("Webhook handler error", err);
-        return res.status(500).send("Webhook handler failed");
-      }
-    });
-  }
-);
-
-// ------------------------------------------------------------
-// Callable: One-time Backfill Spell Slugs (v2)
-// ------------------------------------------------------------
-exports.backfillSpellSlugs = onCall(async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "Login required.");
-  }
-
-  const slugify = (text = "") =>
-    text
-      .toLowerCase()
-      .trim()
-      .replace(/['"]/g, "")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "");
-
-  const makeUniqueSlug = (base, usedSet) => {
-    let slug = base;
-    let i = 2;
-    while (usedSet.has(slug)) {
-      slug = `${base}-${i}`;
-      i += 1;
+      await batch.commit();
+      updatedCount += chunk.length;
     }
-    usedSet.add(slug);
-    return slug;
-  };
 
-  const db = admin.firestore();
-  const snap = await db.collection("spells").get();
-
-  if (snap.empty) {
-    return { updated: 0, message: "No spells found." };
-  }
-
-  const usedSlugs = new Set();
-  snap.docs.forEach((doc) => {
-    const existing = (doc.data()?.slug || "").toString().trim();
-    if (existing) usedSlugs.add(existing);
+    return {
+      updated: updatedCount,
+      message: `Backfilled slugs for ${updatedCount} spells.`,
+    };
   });
-
-  const updates = [];
-  snap.docs.forEach((doc) => {
-    const data = doc.data() || {};
-    const title = (data.title || "").toString().trim();
-    const currentSlug = (data.slug || "").toString().trim();
-
-    if (!title || currentSlug) return;
-
-    const base = slugify(title);
-    if (!base) return;
-
-    const uniqueSlug = makeUniqueSlug(base, usedSlugs);
-    updates.push({ ref: doc.ref, slug: uniqueSlug });
-  });
-
-  if (updates.length === 0) {
-    return { updated: 0, message: "All spells already had slugs." };
-  }
-
-  const chunkSize = 450;
-  let updatedCount = 0;
-
-  for (let i = 0; i < updates.length; i += chunkSize) {
-    const chunk = updates.slice(i, i + chunkSize);
-    const batch = db.batch();
-
-    chunk.forEach((u) => {
-      batch.set(
-        u.ref,
-        {
-          slug: u.slug,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        },
-        { merge: true }
-      );
-    });
-
-    await batch.commit();
-    updatedCount += chunk.length;
-  }
-
-  return {
-    updated: updatedCount,
-    message: `Backfilled slugs for ${updatedCount} spells.`,
-  };
-});

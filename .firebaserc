@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "edge-altar-spell-library"
-  }
+    "default": "edge-altar-spell-library",
+    "spell-library-v2": "spell-library-v2"
+  },
+  "targets": {},
+  "etags": {}
 }

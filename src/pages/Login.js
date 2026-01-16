@@ -1,29 +1,42 @@
-import React, { useState } from 'react';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../firebase';
-import { useNavigate, Link } from 'react-router-dom';
-import './Auth.css';
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { supabase } from "../supabaseClient";
+import "./Auth.css";
 
 function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setLoading(true);
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      navigate('/'); // Redirect to home after login
-    } catch (error) {
-      setError(error.message);
+      const cleanEmail = (email || "").trim();
+
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email: cleanEmail,
+        password,
+      });
+
+      if (signInError) throw signInError;
+
+      // If email confirmations are enabled, session can still be null
+      if (!data?.session) {
+        setError("Please check your email to confirm your account, then sign in.");
+        return;
+      }
+
+      navigate("/"); // Redirect to home after login
+    } catch (err) {
+      setError(err?.message || "Could not sign in. Please try again.");
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   return (
@@ -31,7 +44,7 @@ function Login() {
       <div className="auth-box">
         <h1>Edge & Altar</h1>
         <h2>Sign In</h2>
-        
+
         <form onSubmit={handleLogin}>
           <input
             type="email"
@@ -39,25 +52,27 @@ function Login() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            autoComplete="email"
           />
-          
+
           <input
             type="password"
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            autoComplete="current-password"
           />
-          
+
           {error && <p className="error">{error}</p>}
-          
+
           <button type="submit" disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
-        
+
         <p className="auth-link">
-          Don't have an account? <Link to="/signup">Sign up</Link>
+          Don&apos;t have an account? <Link to="/signup">Sign up</Link>
         </p>
       </div>
     </div>
