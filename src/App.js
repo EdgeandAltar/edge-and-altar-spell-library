@@ -34,17 +34,16 @@ function InlineGateLoader({ label = "Checking access…" }) {
 function App() {
   const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(true); // used as safety, not blocking routes
   const [adminLoading, setAdminLoading] = useState(false);
 
-  // ✅ Prevent repeated auth events from re-triggering admin loading forever
-  const adminCheckInFlightRef = useRef(false);
-  const lastAdminCheckedUserRef = useRef(null);
+  // Tracks the current admin-check promise so repeated auth events don't trap us in "loading"
+  const adminCheckPromiseRef = useRef(null);
+  const adminCheckUserIdRef = useRef(null);
 
   const fetchAdminFlag = async (userId) => {
     if (!userId) return false;
 
-    // hard timeout so adminLoading can't get stuck forever
+    // hard timeout so we never hang forever
     const timeoutMs = 6000;
     const timeout = new Promise((_, reject) =>
       setTimeout(() => reject(new Error("admin check timed out")), timeoutMs)
@@ -73,11 +72,14 @@ function App() {
 
   useEffect(() => {
     let isMounted = true;
-    let lastUserIdWarnOnly = null;
 
-    const loadingFailsafe = setTimeout(() => {
-      if (isMounted) setLoading(false);
-    }, 4000);
+    const clearAll = () => {
+      setUser(null);
+      setIsAdmin(false);
+      setAdminLoading(false);
+      adminCheckPromiseRef.current = null;
+      adminCheckUserIdRef.current = null;
+    };
 
     const applySession = async (session) => {
       const nextUser = session?.user ?? null;
@@ -85,70 +87,58 @@ function App() {
 
       setUser(nextUser);
 
-      // No user → settle immediately
       if (!nextUser) {
-        lastUserIdWarnOnly = null;
-        adminCheckInFlightRef.current = false;
-        lastAdminCheckedUserRef.current = null;
-        setIsAdmin(false);
-        setAdminLoading(false);
-        setLoading(false);
+        clearAll();
         return;
       }
 
-      const thisUserId = nextUser.id;
-      lastUserIdWarnOnly = thisUserId;
-
-      // ✅ If we're already checking admin for this same user, don't restart it.
-      if (
-        adminCheckInFlightRef.current &&
-        lastAdminCheckedUserRef.current === thisUserId
-      ) {
-        // Ensure we aren't stuck showing the gate if something else already finished
-        // (adminLoading should be managed by the in-flight check)
-        return;
-      }
-
-      adminCheckInFlightRef.current = true;
-      lastAdminCheckedUserRef.current = thisUserId;
+      const userId = nextUser.id;
 
       setAdminLoading(true);
 
       try {
-        const admin = await fetchAdminFlag(thisUserId);
-
-        if (!isMounted) return;
-
-        // If a different user took over while we were waiting, stop — clear loading
-        if (lastUserIdWarnOnly !== thisUserId) {
+        // ✅ If we already have an in-flight admin check for this same user, await it.
+        if (adminCheckPromiseRef.current && adminCheckUserIdRef.current === userId) {
+          const admin = await adminCheckPromiseRef.current;
+          if (!isMounted) return;
+          setIsAdmin(Boolean(admin));
           return;
         }
 
-        setIsAdmin(admin);
+        // ✅ Start a fresh admin check promise and store it
+        adminCheckUserIdRef.current = userId;
+
+        adminCheckPromiseRef.current = (async () => {
+          const admin = await fetchAdminFlag(userId);
+          return admin;
+        })();
+
+        const admin = await adminCheckPromiseRef.current;
+
+        if (!isMounted) return;
+        setIsAdmin(Boolean(admin));
       } catch (err) {
         console.error("[applySession] admin check failed:", err);
         if (!isMounted) return;
         setIsAdmin(false);
       } finally {
         if (!isMounted) return;
-        adminCheckInFlightRef.current = false;
         setAdminLoading(false);
-        setLoading(false);
+
+        // ✅ Clear the promise once finished so future changes can re-check
+        adminCheckPromiseRef.current = null;
+        adminCheckUserIdRef.current = null;
       }
     };
 
     const init = async () => {
       try {
         const { data, error } = await supabase.auth.getSession();
-
         if (!isMounted) return;
 
         if (error) {
           console.error("[init] getSession error:", error);
-          setUser(null);
-          setIsAdmin(false);
-          setAdminLoading(false);
-          setLoading(false);
+          clearAll();
           return;
         }
 
@@ -156,10 +146,7 @@ function App() {
       } catch (err) {
         console.error("[init] failed:", err);
         if (!isMounted) return;
-        setUser(null);
-        setIsAdmin(false);
-        setAdminLoading(false);
-        setLoading(false);
+        clearAll();
       }
     };
 
@@ -167,33 +154,33 @@ function App() {
 
     const { data: authSub } = supabase.auth.onAuthStateChange(async (event, session) => {
       try {
-        // Only truly clear state on sign out
+        // ✅ Only respond to real session-bearing events + signout.
+        // This avoids loops where null sessions trigger getSession which triggers more events.
         if (event === "SIGNED_OUT") {
           await applySession(null);
           return;
         }
 
-        // Some environments briefly emit null sessions; reconcile via getSession
-        if (!session) {
-          const { data } = await supabase.auth.getSession();
-          await applySession(data?.session ?? null);
+        if (
+          event === "SIGNED_IN" ||
+          event === "TOKEN_REFRESHED" ||
+          event === "USER_UPDATED" ||
+          event === "INITIAL_SESSION"
+        ) {
+          await applySession(session ?? null);
           return;
         }
 
-        await applySession(session);
+        // Ignore everything else
       } catch (err) {
         console.error("[auth] handler failed:", err);
         if (!isMounted) return;
-        setUser(null);
-        setIsAdmin(false);
-        setAdminLoading(false);
-        setLoading(false);
+        clearAll();
       }
     });
 
     return () => {
       isMounted = false;
-      clearTimeout(loadingFailsafe);
       authSub?.subscription?.unsubscribe();
     };
   }, []);
