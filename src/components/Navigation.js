@@ -1,8 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { HiChevronDown } from "react-icons/hi";
-import { supabase } from "../supabaseClient";
 import "./Navigation.css";
+
+const SUPABASE_URL = "https://wmsekzsocvmfudmjakhu.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indtc2VrenNvY3ZtZnVkbWpha2h1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0OTU1MDMsImV4cCI6MjA4NDA3MTUwM30.1xx9jyZdByOKNphMFHJ6CVOYRgv2fiH8fw-Gj2p4rlQ";
 
 function Navigation({ user, isAdmin }) {
   const navigate = useNavigate();
@@ -11,8 +13,30 @@ function Navigation({ user, isAdmin }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Optional: show Premium vs Manage Membership based on access_level
-  const [accessLevel, setAccessLevel] = useState("free"); // free | premium
+  const [accessLevel, setAccessLevel] = useState("free");
+
+  // Get session from localStorage
+  const getSessionFromStorage = () => {
+    try {
+      const storageKey = Object.keys(localStorage).find(
+        (k) => k.includes("sb-") && k.includes("-auth-token")
+      );
+
+      if (!storageKey) return null;
+
+      const raw = localStorage.getItem(storageKey);
+      if (!raw) return null;
+
+      const parsed = JSON.parse(raw);
+      return {
+        accessToken: parsed?.access_token,
+        user: parsed?.user,
+      };
+    } catch (err) {
+      console.warn("[Navigation] Failed to get session from storage:", err);
+      return null;
+    }
+  };
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -39,21 +63,38 @@ function Navigation({ user, isAdmin }) {
         return;
       }
 
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("access_level")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      if (!alive) return;
-
-      if (error) {
-        console.warn("[Navigation] profiles read error:", error);
+      const session = getSessionFromStorage();
+      if (!session?.accessToken) {
         setAccessLevel("free");
         return;
       }
 
-      setAccessLevel(data?.access_level === "premium" ? "premium" : "free");
+      try {
+        const response = await fetch(
+          `${SUPABASE_URL}/rest/v1/profiles?id=eq.${user.id}&select=access_level`,
+          {
+            headers: {
+              "apikey": SUPABASE_ANON_KEY,
+              "Authorization": `Bearer ${session.accessToken}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) {
+          console.warn("[Navigation] profiles fetch failed:", response.status);
+          if (alive) setAccessLevel("free");
+          return;
+        }
+
+        const data = await response.json();
+        if (alive) {
+          setAccessLevel(data?.[0]?.access_level === "premium" ? "premium" : "free");
+        }
+      } catch (err) {
+        console.warn("[Navigation] loadAccess error:", err);
+        if (alive) setAccessLevel("free");
+      }
     };
 
     loadAccess();
@@ -63,19 +104,21 @@ function Navigation({ user, isAdmin }) {
     };
   }, [user?.id]);
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     try {
       setShowDropdown(false);
 
-      // Supabase sign out (kills session + refresh token)
-      const { error } = await supabase.auth.signOut();
-      if (error) console.warn("Supabase signOut error:", error);
+      // Clear the Supabase session from localStorage
+      const storageKey = Object.keys(localStorage).find(
+        (k) => k.includes("sb-") && k.includes("-auth-token")
+      );
+      
+      if (storageKey) {
+        localStorage.removeItem(storageKey);
+      }
 
-      // SPA navigate is fine, but hard redirect is a reliable fallback if state is stale
-      navigate("/login", { replace: true });
-      window.setTimeout(() => {
-        if (window.location.pathname !== "/login") window.location.assign("/login");
-      }, 250);
+      // Hard redirect to login page to fully reset app state
+      window.location.assign("/login");
     } catch (error) {
       console.error("Error logging out:", error);
       window.location.assign("/login");
