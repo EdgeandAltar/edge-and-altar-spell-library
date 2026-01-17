@@ -121,10 +121,10 @@ function Subscribe() {
 
             <ul className="feature-list">
               <li>
-                <span className="check">✓</span> 150+ premium spells
+                <span className="check">✓</span> 100+ premium spells
               </li>
               <li>
-                <span className="check">✓</span> New spells added over time
+                <span className="check">✓</span> New spells added weekly
               </li>
               <li>
                 <span className="check">✓</span> Advanced search & filters
@@ -163,7 +163,7 @@ function Subscribe() {
             <div className="benefit-icon">
               <HiOutlineBookOpen />
             </div>
-            <h4>150+ Premium Spells</h4>
+            <h4>100+ Premium Spells</h4>
             <p>Access our complete library of curated rituals and ceremonies</p>
           </div>
 
@@ -180,7 +180,7 @@ function Subscribe() {
               <HiOutlineArrowPath />
             </div>
             <h4>Always Growing</h4>
-            <p>New spells added over time — yours forever</p>
+            <p>New spells added weekly — yours forever</p>
           </div>
 
           <div className="benefit">

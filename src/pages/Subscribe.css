@@ -1,7 +1,11 @@
+/* Subscribe.css */
+
 .subscribe-page {
   background: #f5f3ef;
   min-height: 100vh;
   padding-bottom: 60px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* Hero Section */
@@ -10,6 +14,7 @@
   color: white;
   text-align: center;
   padding: 60px 20px;
+  box-sizing: border-box;
 }
 
 .subscribe-hero h1 {
@@ -30,62 +35,40 @@
   padding: 0 20px;
   position: relative;
   z-index: 10;
-}
-
-/* Toggle Buttons */
-.pricing-toggle {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin-bottom: 32px;
-}
-
-.pricing-toggle button {
-  padding: 12px 28px;
-  background: white;
-  border: 2px solid #e8e4db;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
-  color: #7D5E4F;
-  cursor: pointer;
-  transition: all 0.3s;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.pricing-toggle button.active {
-  background: #7D5E4F;
-  color: white;
-  border-color: #7D5E4F;
-}
-
-.save-badge {
-  background: #4caf50;
-  color: white;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 700;
+  box-sizing: border-box;
 }
 
 /* Pricing Cards */
 .pricing-cards {
+  /* Single card layout */
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: 1fr;
+
+  /* ✅ This is the key: cap width so it doesn't stretch */
+  max-width: 980px;
+  margin: 0 auto 32px;
+
   gap: 24px;
-  margin-bottom: 32px;
+  box-sizing: border-box;
+  justify-items: center;
 }
 
 .pricing-card {
   background: white;
   border-radius: 16px;
-  padding: 40px;
+  padding: 32px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   transition: all 0.3s;
   border: 3px solid transparent;
   position: relative;
+  box-sizing: border-box;
+
+  /* ✅ make the card a sane width on desktop */
+  width: 100%;
+  max-width: 860px;
+
+  /* ✅ center header content */
+  text-align: center;
 }
 
 .pricing-card.selected {
@@ -113,10 +96,11 @@
   text-transform: uppercase;
 }
 
+/* Plan Header */
 .plan-header {
   text-align: center;
-  margin-bottom: 32px;
-  padding-bottom: 24px;
+  margin-bottom: 28px;
+  padding-bottom: 22px;
   border-bottom: 2px solid #e8e4db;
 }
 
@@ -150,7 +134,7 @@
   font-size: 18px;
   color: #7d6e57;
   margin-top: 20px;
-  margin-left: 4px;
+  margin-left: 6px;
 }
 
 .plan-description {
@@ -158,11 +142,19 @@
   font-size: 14px;
 }
 
-/* Feature List */
+/* ✅ Feature List (centered block + readable left-aligned text) */
+/* Feature List — truly centered as a block */
 .feature-list {
   list-style: none;
   padding: 0;
   margin: 0;
+  display: inline-block;   /* ✅ makes the UL shrink to its contents */
+  text-align: left;        /* ✅ keeps readable left alignment */
+}
+
+/* Because UL is inline-block, we center it by centering its parent */
+.pricing-card {
+  text-align: center;      /* you already have this — keep it */
 }
 
 .feature-list li {
@@ -178,7 +170,11 @@
   color: #7D5E4F;
   font-weight: 700;
   font-size: 18px;
+  width: 22px;
+  flex: 0 0 22px;
+  text-align: center;
 }
+
 
 /* Subscribe Button */
 .subscribe-button {
@@ -215,6 +211,7 @@
   margin: 80px auto 60px;
   padding: 0 20px;
   text-align: center;
+  box-sizing: border-box;
 }
 
 .benefits-section h2 {
@@ -234,6 +231,7 @@
   padding: 32px 24px;
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  box-sizing: border-box;
 }
 
 .benefit-icon {
@@ -259,6 +257,7 @@
   max-width: 800px;
   margin: 60px auto 40px;
   padding: 0 20px;
+  box-sizing: border-box;
 }
 
 .trust-elements {
@@ -302,8 +301,21 @@
     font-size: 28px;
   }
 
+  .pricing-section {
+    padding: 0 16px;
+  }
+
   .pricing-cards {
-    grid-template-columns: 1fr;
+    max-width: 100%;
+  }
+
+  .pricing-card {
+    padding: 24px;
+    max-width: 100%;
+  }
+
+  .feature-list {
+    max-width: 100%;
   }
 
   .benefits-grid {
