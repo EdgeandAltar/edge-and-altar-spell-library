@@ -27,3 +27,7 @@ yarn-error.log*
 .env
 .env.migration
 .env.local
+
+# one-off migration scripts (contain keys)
+scripts/
+export-firebase-spells.js
