@@ -124,18 +124,29 @@ function App() {
 
     init();
 
-    const { data: authSub } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      try {
-        await applySession(session ?? null);
-      } catch (err) {
-        console.error("onAuthStateChange handler failed:", err);
-        if (!isMounted) return;
-        setUser(null);
-        setIsAdmin(false);
-        setAdminLoading(false);
-        setLoading(false);
-      }
-    });
+    const { data: authSub } = supabase.auth.onAuthStateChange(async (event, session) => {
+  try {
+    // Only clear state on an actual sign-out event.
+    if (event === "SIGNED_OUT") {
+      await applySession(null);
+      return;
+    }
+
+    // If Supabase sends a null session for other events, ignore it
+    // (common during refresh/hydration on some clients).
+    if (!session) return;
+
+    await applySession(session);
+  } catch (err) {
+    console.error("onAuthStateChange handler failed:", err);
+    if (!isMounted) return;
+    setUser(null);
+    setIsAdmin(false);
+    setAdminLoading(false);
+    setLoading(false);
+  }
+});
+
 
     return () => {
       isMounted = false;
