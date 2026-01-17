@@ -36,9 +36,8 @@ function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminLoading, setAdminLoading] = useState(false);
 
-  // Tracks the current admin-check promise so repeated auth events don't trap us in "loading"
-  const adminCheckPromiseRef = useRef(null);
-  const adminCheckUserIdRef = useRef(null);
+  // ✅ remember which user we already checked admin for
+  const lastAdminCheckedUserIdRef = useRef(null);
 
   const fetchAdminFlag = async (userId) => {
     if (!userId) return false;
@@ -57,12 +56,10 @@ function App() {
 
     try {
       const { data, error } = await Promise.race([request, timeout]);
-
       if (error) {
         console.warn("[fetchAdminFlag] error (default false):", error.message);
         return false;
       }
-
       return Boolean(data?.is_admin);
     } catch (err) {
       console.warn("[fetchAdminFlag] timed out / failed:", err?.message || err);
@@ -73,109 +70,89 @@ function App() {
   useEffect(() => {
     let isMounted = true;
 
-    const clearAll = () => {
-      setUser(null);
-      setIsAdmin(false);
-      setAdminLoading(false);
-      adminCheckPromiseRef.current = null;
-      adminCheckUserIdRef.current = null;
-    };
-
     const applySession = async (session) => {
       const nextUser = session?.user ?? null;
       if (!isMounted) return;
 
       setUser(nextUser);
 
+      // signed out
       if (!nextUser) {
-        clearAll();
+        lastAdminCheckedUserIdRef.current = null;
+        setIsAdmin(false);
+        setAdminLoading(false);
         return;
       }
 
       const userId = nextUser.id;
 
+      // ✅ If we've already checked admin for this user, DO NOT flip loading again
+      if (lastAdminCheckedUserIdRef.current === userId) {
+        setAdminLoading(false);
+        return;
+      }
+
+      // First time seeing this user → check admin once
+      lastAdminCheckedUserIdRef.current = userId;
       setAdminLoading(true);
 
       try {
-        // ✅ If we already have an in-flight admin check for this same user, await it.
-        if (adminCheckPromiseRef.current && adminCheckUserIdRef.current === userId) {
-          const admin = await adminCheckPromiseRef.current;
-          if (!isMounted) return;
-          setIsAdmin(Boolean(admin));
-          return;
-        }
-
-        // ✅ Start a fresh admin check promise and store it
-        adminCheckUserIdRef.current = userId;
-
-        adminCheckPromiseRef.current = (async () => {
-          const admin = await fetchAdminFlag(userId);
-          return admin;
-        })();
-
-        const admin = await adminCheckPromiseRef.current;
-
+        const admin = await fetchAdminFlag(userId);
         if (!isMounted) return;
-        setIsAdmin(Boolean(admin));
-      } catch (err) {
-        console.error("[applySession] admin check failed:", err);
-        if (!isMounted) return;
-        setIsAdmin(false);
+        setIsAdmin(admin);
       } finally {
         if (!isMounted) return;
         setAdminLoading(false);
-
-        // ✅ Clear the promise once finished so future changes can re-check
-        adminCheckPromiseRef.current = null;
-        adminCheckUserIdRef.current = null;
       }
     };
 
     const init = async () => {
-      try {
-        const { data, error } = await supabase.auth.getSession();
-        if (!isMounted) return;
+      const { data, error } = await supabase.auth.getSession();
+      if (!isMounted) return;
 
-        if (error) {
-          console.error("[init] getSession error:", error);
-          clearAll();
-          return;
-        }
-
-        await applySession(data?.session ?? null);
-      } catch (err) {
-        console.error("[init] failed:", err);
-        if (!isMounted) return;
-        clearAll();
+      if (error) {
+        console.error("[init] getSession error:", error);
+        setUser(null);
+        setIsAdmin(false);
+        setAdminLoading(false);
+        return;
       }
+
+      await applySession(data?.session ?? null);
     };
 
     init();
 
     const { data: authSub } = supabase.auth.onAuthStateChange(async (event, session) => {
       try {
-        // ✅ Only respond to real session-bearing events + signout.
-        // This avoids loops where null sessions trigger getSession which triggers more events.
+        // ✅ Only clear on real sign-out
         if (event === "SIGNED_OUT") {
           await applySession(null);
           return;
         }
 
-        if (
-          event === "SIGNED_IN" ||
-          event === "TOKEN_REFRESHED" ||
-          event === "USER_UPDATED" ||
-          event === "INITIAL_SESSION"
-        ) {
-          await applySession(session ?? null);
+        // ✅ On TOKEN_REFRESHED, DO NOT re-run admin checks.
+        // Just keep the user set so your app stays stable.
+        if (event === "TOKEN_REFRESHED") {
+          if (!isMounted) return;
+          setUser(session?.user ?? null);
           return;
         }
 
-        // Ignore everything else
+        // For actual sign-in / initial session / user update, apply session normally
+        if (
+          event === "SIGNED_IN" ||
+          event === "INITIAL_SESSION" ||
+          event === "USER_UPDATED"
+        ) {
+          await applySession(session ?? null);
+        }
       } catch (err) {
         console.error("[auth] handler failed:", err);
         if (!isMounted) return;
-        clearAll();
+        setUser(null);
+        setIsAdmin(false);
+        setAdminLoading(false);
       }
     });
 
@@ -213,7 +190,6 @@ function App() {
             )
           }
         />
-
         <Route
           path="/manage-spells"
           element={
@@ -230,7 +206,6 @@ function App() {
             )
           }
         />
-
         <Route
           path="/edit-spell/:id"
           element={
