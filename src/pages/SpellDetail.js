@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { generateSpellPDF } from "../pdfService";
 import { addJournalEntry } from "../journalService";
+import Toast from "../components/Toast";
 import {
   HiOutlineHeart,
   HiHeart,
@@ -21,6 +22,7 @@ function SpellDetail() {
   const [spell, setSpell] = useState(null);
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState("");
+  const [toast, setToast] = useState(null);
 
   const [userSubscription, setUserSubscription] = useState("free");
   const [accessToken, setAccessToken] = useState(null);
@@ -210,7 +212,7 @@ function SpellDetail() {
 
   const handleAddToJournal = async () => {
     if (!userId || !spell) {
-      alert("Please log in to add journal entries.");
+      setToast({ message: "Please log in to add journal entries.", type: "error" });
       return;
     }
 
@@ -223,13 +225,13 @@ function SpellDetail() {
     });
 
     if (entry) {
-      alert("Added to your journal!");
+      setToast({ message: "Added to your journal!", type: "success" });
       setShowJournalModal(false);
       setJournalRating(0);
       setJournalNotes("");
       setJournalTags([]);
     } else {
-      alert("Failed to add to journal. Please try again.");
+      setToast({ message: "Failed to add to journal. Please try again.", type: "error" });
     }
   };
 
@@ -618,6 +620,14 @@ function SpellDetail() {
             </div>
           </div>
         </div>
+      )}
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
       )}
     </div>
   );
