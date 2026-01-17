@@ -1,5 +1,5 @@
 // src/App.js
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { supabase } from "./supabaseClient";
 
@@ -34,29 +34,46 @@ function InlineGateLoader({ label = "Checking access…" }) {
 function App() {
   const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // used as safety, not blocking routes
   const [adminLoading, setAdminLoading] = useState(false);
+
+  // ✅ Prevent repeated auth events from re-triggering admin loading forever
+  const adminCheckInFlightRef = useRef(false);
+  const lastAdminCheckedUserRef = useRef(null);
 
   const fetchAdminFlag = async (userId) => {
     if (!userId) return false;
 
-    const { data, error } = await supabase
+    // hard timeout so adminLoading can't get stuck forever
+    const timeoutMs = 6000;
+    const timeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("admin check timed out")), timeoutMs)
+    );
+
+    const request = supabase
       .from("profiles")
       .select("is_admin")
       .eq("id", userId)
       .maybeSingle();
 
-    if (error) {
-      console.warn("[fetchAdminFlag] error (default false):", error.message);
+    try {
+      const { data, error } = await Promise.race([request, timeout]);
+
+      if (error) {
+        console.warn("[fetchAdminFlag] error (default false):", error.message);
+        return false;
+      }
+
+      return Boolean(data?.is_admin);
+    } catch (err) {
+      console.warn("[fetchAdminFlag] timed out / failed:", err?.message || err);
       return false;
     }
-
-    return Boolean(data?.is_admin);
   };
 
   useEffect(() => {
     let isMounted = true;
-    let lastUserId = null;
+    let lastUserIdWarnOnly = null;
 
     const loadingFailsafe = setTimeout(() => {
       if (isMounted) setLoading(false);
@@ -70,7 +87,9 @@ function App() {
 
       // No user → settle immediately
       if (!nextUser) {
-        lastUserId = null;
+        lastUserIdWarnOnly = null;
+        adminCheckInFlightRef.current = false;
+        lastAdminCheckedUserRef.current = null;
         setIsAdmin(false);
         setAdminLoading(false);
         setLoading(false);
@@ -78,7 +97,20 @@ function App() {
       }
 
       const thisUserId = nextUser.id;
-      lastUserId = thisUserId;
+      lastUserIdWarnOnly = thisUserId;
+
+      // ✅ If we're already checking admin for this same user, don't restart it.
+      if (
+        adminCheckInFlightRef.current &&
+        lastAdminCheckedUserRef.current === thisUserId
+      ) {
+        // Ensure we aren't stuck showing the gate if something else already finished
+        // (adminLoading should be managed by the in-flight check)
+        return;
+      }
+
+      adminCheckInFlightRef.current = true;
+      lastAdminCheckedUserRef.current = thisUserId;
 
       setAdminLoading(true);
 
@@ -87,9 +119,8 @@ function App() {
 
         if (!isMounted) return;
 
-        // If a different user took over while we were waiting, stop — BUT clear loading
-        if (lastUserId !== thisUserId) {
-          setAdminLoading(false);
+        // If a different user took over while we were waiting, stop — clear loading
+        if (lastUserIdWarnOnly !== thisUserId) {
           return;
         }
 
@@ -100,6 +131,7 @@ function App() {
         setIsAdmin(false);
       } finally {
         if (!isMounted) return;
+        adminCheckInFlightRef.current = false;
         setAdminLoading(false);
         setLoading(false);
       }
@@ -177,6 +209,7 @@ function App() {
         <Route path="/success" element={<Success />} />
         <Route path="/" element={user ? <Home /> : <Navigate to="/login" replace />} />
 
+        {/* Admin-only routes */}
         <Route
           path="/admin"
           element={
@@ -228,6 +261,7 @@ function App() {
           }
         />
 
+        {/* Regular logged-in routes */}
         <Route path="/library" element={user ? <SpellLibrary /> : <Navigate to="/login" replace />} />
         <Route path="/spell/:id" element={user ? <SpellDetail /> : <Navigate to="/login" replace />} />
         <Route path="/subscribe" element={user ? <Subscribe /> : <Navigate to="/login" replace />} />
