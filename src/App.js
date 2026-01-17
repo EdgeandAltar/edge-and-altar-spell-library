@@ -23,7 +23,6 @@ import Account from "./pages/Account";
 
 import "./App.css";
 
-// Small inline loader used only for admin-gated routes
 function InlineGateLoader({ label = "Checking access…" }) {
   return (
     <div style={{ padding: 24, maxWidth: 900, margin: "0 auto" }}>
@@ -33,10 +32,10 @@ function InlineGateLoader({ label = "Checking access…" }) {
 }
 
 function App() {
-  const [user, setUser] = useState(null);            // Supabase user object
-  const [isAdmin, setIsAdmin] = useState(false);     // profiles.is_admin
-  const [loading, setLoading] = useState(true);      // auth init (non-blocking for routes)
-  const [adminLoading, setAdminLoading] = useState(true); // admin flag fetch state
+  const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [adminLoading, setAdminLoading] = useState(false);
 
   const fetchAdminFlag = async (userId) => {
     if (!userId) return false;
@@ -47,20 +46,18 @@ function App() {
       .eq("id", userId)
       .maybeSingle();
 
-    // If profile doesn't exist yet or RLS blocks it, treat as non-admin
     if (error) {
-      console.warn("fetchAdminFlag error (defaulting to false):", error.message);
+      console.warn("[fetchAdminFlag] error (default false):", error.message);
       return false;
     }
 
-    return !!data?.is_admin;
+    return Boolean(data?.is_admin);
   };
 
   useEffect(() => {
     let isMounted = true;
     let lastUserId = null;
 
-    // ✅ Failsafe: never hang on loading forever (helps after Stripe redirect)
     const loadingFailsafe = setTimeout(() => {
       if (isMounted) setLoading(false);
     }, 4000);
@@ -71,29 +68,41 @@ function App() {
 
       setUser(nextUser);
 
-      // No user: immediately settle both auth + admin state
+      // No user → settle immediately
       if (!nextUser) {
+        lastUserId = null;
         setIsAdmin(false);
         setAdminLoading(false);
         setLoading(false);
         return;
       }
 
-      // We HAVE a user: keep previous isAdmin value while we re-check,
-      // and gate admin-only routes with adminLoading to prevent "flash then redirect"
-      setAdminLoading(true);
-
       const thisUserId = nextUser.id;
       lastUserId = thisUserId;
 
-      const admin = await fetchAdminFlag(thisUserId);
+      setAdminLoading(true);
 
-      if (!isMounted) return;
-      if (lastUserId !== thisUserId) return; // stale result
+      try {
+        const admin = await fetchAdminFlag(thisUserId);
 
-      setIsAdmin(admin);
-      setAdminLoading(false);
-      setLoading(false);
+        if (!isMounted) return;
+
+        // If a different user took over while we were waiting, stop — BUT clear loading
+        if (lastUserId !== thisUserId) {
+          setAdminLoading(false);
+          return;
+        }
+
+        setIsAdmin(admin);
+      } catch (err) {
+        console.error("[applySession] admin check failed:", err);
+        if (!isMounted) return;
+        setIsAdmin(false);
+      } finally {
+        if (!isMounted) return;
+        setAdminLoading(false);
+        setLoading(false);
+      }
     };
 
     const init = async () => {
@@ -103,7 +112,7 @@ function App() {
         if (!isMounted) return;
 
         if (error) {
-          console.error("Supabase getSession error:", error);
+          console.error("[init] getSession error:", error);
           setUser(null);
           setIsAdmin(false);
           setAdminLoading(false);
@@ -113,7 +122,7 @@ function App() {
 
         await applySession(data?.session ?? null);
       } catch (err) {
-        console.error("App init failed:", err);
+        console.error("[init] failed:", err);
         if (!isMounted) return;
         setUser(null);
         setIsAdmin(false);
@@ -125,28 +134,30 @@ function App() {
     init();
 
     const { data: authSub } = supabase.auth.onAuthStateChange(async (event, session) => {
-  try {
-    // Only clear state on an actual sign-out event.
-    if (event === "SIGNED_OUT") {
-      await applySession(null);
-      return;
-    }
+      try {
+        // Only truly clear state on sign out
+        if (event === "SIGNED_OUT") {
+          await applySession(null);
+          return;
+        }
 
-    // If Supabase sends a null session for other events, ignore it
-    // (common during refresh/hydration on some clients).
-    if (!session) return;
+        // Some environments briefly emit null sessions; reconcile via getSession
+        if (!session) {
+          const { data } = await supabase.auth.getSession();
+          await applySession(data?.session ?? null);
+          return;
+        }
 
-    await applySession(session);
-  } catch (err) {
-    console.error("onAuthStateChange handler failed:", err);
-    if (!isMounted) return;
-    setUser(null);
-    setIsAdmin(false);
-    setAdminLoading(false);
-    setLoading(false);
-  }
-});
-
+        await applySession(session);
+      } catch (err) {
+        console.error("[auth] handler failed:", err);
+        if (!isMounted) return;
+        setUser(null);
+        setIsAdmin(false);
+        setAdminLoading(false);
+        setLoading(false);
+      }
+    });
 
     return () => {
       isMounted = false;
@@ -155,26 +166,17 @@ function App() {
     };
   }, []);
 
-  // ✅ IMPORTANT: keep showing routes even if auth is still initializing,
-  // so Stripe redirects to /success never get stuck behind the global loader.
-  // We'll show a soft loader in Navigation if needed, but not block the whole app.
   return (
     <Router>
-      {/* Pass adminLoading so nav doesn't flash/hide links unpredictably */}
-<Navigation user={user} isAdmin={isAdmin} adminLoading={adminLoading} />
+      <Navigation user={user} isAdmin={isAdmin} adminLoading={adminLoading} />
 
       <Routes>
-        {/* Auth routes */}
         <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
         <Route path="/signup" element={user ? <Navigate to="/" replace /> : <Signup />} />
 
-        {/* Stripe success should ALWAYS be reachable */}
         <Route path="/success" element={<Success />} />
-
-        {/* Home */}
         <Route path="/" element={user ? <Home /> : <Navigate to="/login" replace />} />
 
-        {/* ✅ Admin-only routes (gate on adminLoading to prevent redirect flicker) */}
         <Route
           path="/admin"
           element={
@@ -191,6 +193,7 @@ function App() {
             )
           }
         />
+
         <Route
           path="/manage-spells"
           element={
@@ -207,6 +210,7 @@ function App() {
             )
           }
         />
+
         <Route
           path="/edit-spell/:id"
           element={
@@ -224,7 +228,6 @@ function App() {
           }
         />
 
-        {/* Regular logged-in routes */}
         <Route path="/library" element={user ? <SpellLibrary /> : <Navigate to="/login" replace />} />
         <Route path="/spell/:id" element={user ? <SpellDetail /> : <Navigate to="/login" replace />} />
         <Route path="/subscribe" element={user ? <Subscribe /> : <Navigate to="/login" replace />} />
