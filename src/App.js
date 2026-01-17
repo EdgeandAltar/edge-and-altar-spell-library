@@ -1,3 +1,4 @@
+// src/App.js
 import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { supabase } from "./supabaseClient";
@@ -22,10 +23,20 @@ import Account from "./pages/Account";
 
 import "./App.css";
 
+// Small inline loader used only for admin-gated routes
+function InlineGateLoader({ label = "Checking access…" }) {
+  return (
+    <div style={{ padding: 24, maxWidth: 900, margin: "0 auto" }}>
+      <p style={{ margin: 0 }}>{label}</p>
+    </div>
+  );
+}
+
 function App() {
-  const [user, setUser] = useState(null);         // Supabase user object
-  const [isAdmin, setIsAdmin] = useState(false);  // profiles.is_admin
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);            // Supabase user object
+  const [isAdmin, setIsAdmin] = useState(false);     // profiles.is_admin
+  const [loading, setLoading] = useState(true);      // auth init (non-blocking for routes)
+  const [adminLoading, setAdminLoading] = useState(true); // admin flag fetch state
 
   const fetchAdminFlag = async (userId) => {
     if (!userId) return false;
@@ -56,18 +67,22 @@ function App() {
 
     const applySession = async (session) => {
       const nextUser = session?.user ?? null;
-
       if (!isMounted) return;
 
       setUser(nextUser);
-      setIsAdmin(false); // reset immediately so it doesn't "stick"
 
+      // No user: immediately settle both auth + admin state
       if (!nextUser) {
+        setIsAdmin(false);
+        setAdminLoading(false);
         setLoading(false);
         return;
       }
 
-      // Prevent race conditions if auth changes quickly
+      // We HAVE a user: keep previous isAdmin value while we re-check,
+      // and gate admin-only routes with adminLoading to prevent "flash then redirect"
+      setAdminLoading(true);
+
       const thisUserId = nextUser.id;
       lastUserId = thisUserId;
 
@@ -77,6 +92,7 @@ function App() {
       if (lastUserId !== thisUserId) return; // stale result
 
       setIsAdmin(admin);
+      setAdminLoading(false);
       setLoading(false);
     };
 
@@ -90,6 +106,7 @@ function App() {
           console.error("Supabase getSession error:", error);
           setUser(null);
           setIsAdmin(false);
+          setAdminLoading(false);
           setLoading(false);
           return;
         }
@@ -100,6 +117,7 @@ function App() {
         if (!isMounted) return;
         setUser(null);
         setIsAdmin(false);
+        setAdminLoading(false);
         setLoading(false);
       }
     };
@@ -114,6 +132,7 @@ function App() {
         if (!isMounted) return;
         setUser(null);
         setIsAdmin(false);
+        setAdminLoading(false);
         setLoading(false);
       }
     });
@@ -130,41 +149,78 @@ function App() {
   // We'll show a soft loader in Navigation if needed, but not block the whole app.
   return (
     <Router>
-      <Navigation user={user} isAdmin={isAdmin} />
+      {/* Pass adminLoading so nav doesn't flash/hide links unpredictably */}
+<Navigation user={user} isAdmin={isAdmin} adminLoading={adminLoading} />
 
       <Routes>
         {/* Auth routes */}
-        <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
-        <Route path="/signup" element={user ? <Navigate to="/" /> : <Signup />} />
+        <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
+        <Route path="/signup" element={user ? <Navigate to="/" replace /> : <Signup />} />
 
         {/* Stripe success should ALWAYS be reachable */}
         <Route path="/success" element={<Success />} />
 
         {/* Home */}
-        <Route path="/" element={user ? <Home /> : <Navigate to="/login" />} />
+        <Route path="/" element={user ? <Home /> : <Navigate to="/login" replace />} />
 
-        {/* ✅ Admin-only routes */}
+        {/* ✅ Admin-only routes (gate on adminLoading to prevent redirect flicker) */}
         <Route
           path="/admin"
-          element={user ? (isAdmin ? <Admin /> : <Navigate to="/" />) : <Navigate to="/login" />}
+          element={
+            user ? (
+              adminLoading ? (
+                <InlineGateLoader label="Checking admin access…" />
+              ) : isAdmin ? (
+                <Admin />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
         />
         <Route
           path="/manage-spells"
-          element={user ? (isAdmin ? <ManageSpells /> : <Navigate to="/" />) : <Navigate to="/login" />}
+          element={
+            user ? (
+              adminLoading ? (
+                <InlineGateLoader label="Checking admin access…" />
+              ) : isAdmin ? (
+                <ManageSpells />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
         />
         <Route
           path="/edit-spell/:id"
-          element={user ? (isAdmin ? <EditSpell /> : <Navigate to="/" />) : <Navigate to="/login" />}
+          element={
+            user ? (
+              adminLoading ? (
+                <InlineGateLoader label="Checking admin access…" />
+              ) : isAdmin ? (
+                <EditSpell />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
         />
 
         {/* Regular logged-in routes */}
-        <Route path="/library" element={user ? <SpellLibrary /> : <Navigate to="/login" />} />
-        <Route path="/spell/:id" element={user ? <SpellDetail /> : <Navigate to="/login" />} />
-        <Route path="/subscribe" element={user ? <Subscribe /> : <Navigate to="/login" />} />
-        <Route path="/quiz" element={user ? <SpellQuiz /> : <Navigate to="/login" />} />
-        <Route path="/journal" element={user ? <SpellJournal /> : <Navigate to="/login" />} />
-        <Route path="/favorites" element={user ? <Favorites /> : <Navigate to="/login" />} />
-        <Route path="/account" element={user ? <Account /> : <Navigate to="/login" />} />
+        <Route path="/library" element={user ? <SpellLibrary /> : <Navigate to="/login" replace />} />
+        <Route path="/spell/:id" element={user ? <SpellDetail /> : <Navigate to="/login" replace />} />
+        <Route path="/subscribe" element={user ? <Subscribe /> : <Navigate to="/login" replace />} />
+        <Route path="/quiz" element={user ? <SpellQuiz /> : <Navigate to="/login" replace />} />
+        <Route path="/journal" element={user ? <SpellJournal /> : <Navigate to="/login" replace />} />
+        <Route path="/favorites" element={user ? <Favorites /> : <Navigate to="/login" replace />} />
+        <Route path="/account" element={user ? <Account /> : <Navigate to="/login" replace />} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>

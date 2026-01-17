@@ -1,12 +1,14 @@
+// src/components/Navigation.js
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { HiChevronDown } from "react-icons/hi";
 import "./Navigation.css";
 
 const SUPABASE_URL = "https://wmsekzsocvmfudmjakhu.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indtc2VrenNvY3ZtZnVkbWpha2h1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0OTU1MDMsImV4cCI6MjA4NDA3MTUwM30.1xx9jyZdByOKNphMFHJ6CVOYRgv2fiH8fw-Gj2p4rlQ";
+const SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indtc2VrenNvY3ZtZnVkbWpha2h1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0OTU1MDMsImV4cCI6MjA4NDA3MTUwM30.1xx9jyZdByOKNphMFHJ6CVOYRgv2fiH8fw-Gj2p4rlQ";
 
-function Navigation({ user, isAdmin }) {
+function Navigation({ user, isAdmin, adminLoading }) {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -59,13 +61,13 @@ function Navigation({ user, isAdmin }) {
 
     const loadAccess = async () => {
       if (!user?.id) {
-        setAccessLevel("free");
+        if (alive) setAccessLevel("free");
         return;
       }
 
       const session = getSessionFromStorage();
       if (!session?.accessToken) {
-        setAccessLevel("free");
+        if (alive) setAccessLevel("free");
         return;
       }
 
@@ -74,8 +76,8 @@ function Navigation({ user, isAdmin }) {
           `${SUPABASE_URL}/rest/v1/profiles?id=eq.${user.id}&select=access_level`,
           {
             headers: {
-              "apikey": SUPABASE_ANON_KEY,
-              "Authorization": `Bearer ${session.accessToken}`,
+              apikey: SUPABASE_ANON_KEY,
+              Authorization: `Bearer ${session.accessToken}`,
               "Content-Type": "application/json",
             },
           }
@@ -112,7 +114,7 @@ function Navigation({ user, isAdmin }) {
       const storageKey = Object.keys(localStorage).find(
         (k) => k.includes("sb-") && k.includes("-auth-token")
       );
-      
+
       if (storageKey) {
         localStorage.removeItem(storageKey);
       }
@@ -124,6 +126,8 @@ function Navigation({ user, isAdmin }) {
       window.location.assign("/login");
     }
   };
+
+  const showAdminLinks = Boolean(user) && !adminLoading && Boolean(isAdmin);
 
   return (
     <nav className="navbar">
@@ -192,7 +196,8 @@ function Navigation({ user, isAdmin }) {
               )}
             </div>
 
-            {isAdmin && (
+            {/* Admin links: only show once admin check is finished */}
+            {showAdminLinks && (
               <>
                 <button
                   className="nav-link"
