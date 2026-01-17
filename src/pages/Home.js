@@ -76,7 +76,7 @@ function Home() {
             <span className="highlight">Practical Magic</span>
           </h1>
           <p className="hero-subtitle">
-            150+ curated spells for busy people. No elaborate setups. No gatekeeping.
+            200+ curated spells for busy people. No elaborate setups. No gatekeeping.
             Just real magic that fits your real life.
           </p>
 
@@ -101,7 +101,7 @@ function Home() {
       {/* Stats Section */}
       <section className="stats">
         <div className="stat-card">
-          <div className="stat-number">150+</div>
+          <div className="stat-number">200+</div>
           <div className="stat-label">Curated Spells</div>
         </div>
         <div className="stat-card">
