@@ -2,7 +2,6 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@13.10.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 
-// ✅ CORS helpers
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -11,7 +10,7 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // ✅ Handle preflight
+  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -22,25 +21,24 @@ serve(async (req) => {
     }
 
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const stripePriceId = Deno.env.get("STRIPE_PRICE_ID");
+    const serviceRoleKey = Deno.env.get("SERVICE_ROLE_KEY");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
 
-    if (!stripeSecretKey || !supabaseUrl || !supabaseServiceKey || !stripePriceId) {
+    if (!stripeSecretKey || !stripePriceId || !serviceRoleKey || !supabaseUrl) {
       console.error("Missing env vars", {
         hasStripeSecret: !!stripeSecretKey,
-        hasSupabaseUrl: !!supabaseUrl,
-        hasServiceKey: !!supabaseServiceKey,
         hasPriceId: !!stripePriceId,
+        hasServiceRole: !!serviceRoleKey,
+        hasSupabaseUrl: !!supabaseUrl,
       });
-
       return new Response(JSON.stringify({ error: "Missing env vars" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // ✅ Require Authorization header
+    // Get auth token from header
     const authHeader = req.headers.get("Authorization");
     if (!authHeader || !authHeader.toLowerCase().startsWith("bearer ")) {
       console.error("Missing/invalid Authorization header");
@@ -50,22 +48,14 @@ serve(async (req) => {
       });
     }
 
-    // Extract the JWT token
-    const token = authHeader.replace(/^bearer\s+/i, "");
+    const token = authHeader.replace(/^bearer /i, "");
 
-    // ✅ Use service role client to verify the token
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    });
+    // Validate the token and get user
+    const supabase = createClient(supabaseUrl, serviceRoleKey);
+    const { data: userData, error: userErr } = await supabase.auth.getUser(token);
 
-    // Get user from token
-    const { data: userData, error: userErr } = await supabaseAdmin.auth.getUser(token);
-    
     if (userErr || !userData?.user) {
-      console.error("Token validation failed:", userErr?.message || "No user found");
+      console.error("Auth validation failed:", userErr);
       return new Response(JSON.stringify({ error: "Not authenticated" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -73,14 +63,10 @@ serve(async (req) => {
     }
 
     const user = userData.user;
-    console.log("Authenticated user:", user.id, user.email);
 
-    // ✅ Read origin from body so redirects work on localhost + prod
+    // Read origin from body
     const body = await req.json().catch(() => ({}));
-    const origin = typeof body?.origin === "string" ? body.origin : null;
-
-    const baseUrl =
-      origin && origin.startsWith("http") ? origin : "http://localhost:3000";
+    const origin = typeof body?.origin === "string" ? body.origin : "http://localhost:3000";
 
     const stripe = new Stripe(stripeSecretKey, {
       apiVersion: "2023-10-16",
@@ -93,13 +79,10 @@ serve(async (req) => {
       mode: "payment",
       line_items: [{ price: stripePriceId, quantity: 1 }],
       allow_promotion_codes: true,
-
-      // ✅ Critical mapping back to Supabase user
       client_reference_id: user.id,
       customer_email: user.email ?? undefined,
-
-      success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/subscribe`,
+      success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/subscribe`,
     });
 
     console.log("Created checkout session:", session.id, "client_reference_id:", user.id);
@@ -110,7 +93,6 @@ serve(async (req) => {
     });
   } catch (err) {
     console.error("create-checkout error:", err);
-
     return new Response(JSON.stringify({ error: String(err) }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

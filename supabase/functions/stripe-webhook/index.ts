@@ -1,8 +1,8 @@
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import Stripe from "https://esm.sh/stripe@16.0.0?target=deno";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import Stripe from "https://esm.sh/stripe@13.10.0?target=deno";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 
-Deno.serve(async (req) => {
+serve(async (req) => {
   try {
     if (req.method !== "POST") {
       return new Response("Method Not Allowed", { status: 405 });
@@ -14,44 +14,55 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
 
     if (!stripeSecretKey || !webhookSecret || !serviceRoleKey || !supabaseUrl) {
-      console.error("Missing env vars");
+      console.error("Missing env vars", {
+        hasStripeSecret: !!stripeSecretKey,
+        hasWebhookSecret: !!webhookSecret,
+        hasServiceRole: !!serviceRoleKey,
+        hasSupabaseUrl: !!supabaseUrl,
+      });
       return new Response("Missing env vars", { status: 500 });
     }
 
-    const stripe = new Stripe(stripeSecretKey, { apiVersion: "2024-06-20" });
+    const stripe = new Stripe(stripeSecretKey, {
+      apiVersion: "2023-10-16",
+      httpClient: Stripe.createFetchHttpClient(),
+    });
 
-    // ✅ MUST be raw body for signature verification (read exactly once)
+    // Read raw body for signature verification
     const body = await req.text();
     const signature = req.headers.get("stripe-signature");
-    if (!signature) return new Response("Missing stripe-signature", { status: 400 });
+
+    if (!signature) {
+      return new Response("Missing stripe-signature", { status: 400 });
+    }
 
     let event: Stripe.Event;
     try {
-      // ✅ Stripe v16 + Deno requires async verification
-      event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
+      event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
     } catch (err) {
       console.error("Webhook signature verification failed:", err);
       return new Response(`Invalid signature: ${String(err)}`, { status: 400 });
     }
 
-    const type = event.type;
+    console.log("Received event:", event.type);
 
     if (
-      type === "checkout.session.completed" ||
-      type === "checkout.session.async_payment_succeeded"
+      event.type === "checkout.session.completed" ||
+      event.type === "checkout.session.async_payment_succeeded"
     ) {
       const session = event.data.object as Stripe.Checkout.Session;
       const userId = session.client_reference_id;
 
+      console.log("Processing checkout for user:", userId, "session:", session.id);
+
       if (!userId) {
         console.error("No client_reference_id on session:", session.id);
-        // 200 so Stripe doesn't retry forever; but log makes it obvious
         return new Response("Missing client_reference_id", { status: 200 });
       }
 
       const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-      // ✅ Use UPSERT so missing profile row doesn't block upgrades
+      // Upsert so missing profile row doesn't block upgrades
       const { error } = await supabaseAdmin
         .from("profiles")
         .upsert(
