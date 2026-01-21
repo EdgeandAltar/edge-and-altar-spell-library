@@ -227,7 +227,7 @@ function App() {
         <Route path="/library" element={user ? <SpellLibrary /> : <Navigate to="/login" replace />} />
         <Route path="/spell/:id" element={user ? <SpellDetail /> : <Navigate to="/login" replace />} />
         <Route path="/subscribe" element={user ? <Subscribe /> : <Navigate to="/login" replace />} />
-        <Route path="/quiz" element={user ? <SpellQuiz /> : <Navigate to="/login" replace />} />
+<Route path="/quiz" element={user ? <SpellQuiz /> : <Navigate to="/login" replace />} />
         <Route path="/journal" element={user ? <SpellJournal /> : <Navigate to="/login" replace />} />
         <Route path="/favorites" element={user ? <Favorites /> : <Navigate to="/login" replace />} />
         <Route path="/account" element={user ? <Account /> : <Navigate to="/login" replace />} />

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "./SpellQuiz.css";
 
 const SUPABASE_URL = "https://wmsekzsocvmfudmjakhu.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indtc2VrenNvY3ZtZnVkbWpha2h1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0OTU1MDMsImV4cCI6MjA4NDA3MTUwM30.1xx9jyZdByOKNphMFHJ6CVOYRgv2fiH8fw-Gj2p4rlQ";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indtc2VrenNvY3ZtZnVkbWpha2h1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0OTU1MDMsImV4cCI6MjA4NDA3MTUwM30.1xx9jyZdByOKNphMFHJ6CVOYRgv2fiH0fw-Gj2p4rlQ";
 
 function SpellQuiz() {
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -11,6 +11,7 @@ function SpellQuiz() {
   const [showResults, setShowResults] = useState(false);
   const [recommendations, setRecommendations] = useState([]);
   const [userSubscription, setUserSubscription] = useState("free");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [allSpells, setAllSpells] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -68,13 +69,13 @@ function SpellQuiz() {
       }
     };
 
-    const fetchSpells = async (token) => {
+    // Fetch spells WITHOUT requiring auth - works for everyone
+    const fetchSpellsPublic = async () => {
       const response = await fetch(
         `${SUPABASE_URL}/rest/v1/spells?select=id,title,when_to_use,category,time_required,skill_level,seasonal_tags,tags,is_premium,image_url,created_at&order=created_at.desc`,
         {
           headers: {
             "apikey": SUPABASE_ANON_KEY,
-            "Authorization": `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         }
@@ -105,28 +106,30 @@ function SpellQuiz() {
       try {
         setLoading(true);
 
-        const session = getSessionFromStorage();
-
-        if (!session?.accessToken || !session?.user) {
-          if (alive) {
-            setAllSpells([]);
-            setUserSubscription("free");
-            setLoading(false);
-          }
-          return;
-        }
-
-        const spells = await fetchSpells(session.accessToken);
+        // Always fetch spells first (works for both logged-in and anonymous users)
+        const spells = await fetchSpellsPublic();
         if (!alive) return;
         setAllSpells(spells);
 
-        const level = await fetchAccessLevel(session.accessToken, session.user.id);
-        if (!alive) return;
-        setUserSubscription(level);
+        // Then check if user is logged in for subscription status
+        const session = getSessionFromStorage();
+
+        if (session?.accessToken && session?.user) {
+          // User is logged in
+          setIsLoggedIn(true);
+          const level = await fetchAccessLevel(session.accessToken, session.user.id);
+          if (!alive) return;
+          setUserSubscription(level);
+        } else {
+          // Anonymous user
+          setIsLoggedIn(false);
+          setUserSubscription("free");
+        }
       } catch (err) {
         console.error("[SpellQuiz] load error:", err);
         if (alive) {
           setAllSpells([]);
+          setIsLoggedIn(false);
           setUserSubscription("free");
         }
       } finally {
@@ -308,6 +311,15 @@ function SpellQuiz() {
     setRecommendations([]);
   };
 
+  // Handle clicking on a spell card
+  const handleSpellClick = (spellId) => {
+    if (isLoggedIn) {
+      navigate(`/spell/${spellId}`);
+    } else {
+      navigate("/signup");
+    }
+  };
+
   if (loading) {
     return (
       <div className="quiz-container">
@@ -324,7 +336,19 @@ function SpellQuiz() {
         <div className="quiz-results">
           <h1>Your Personalized Spell Recommendations</h1>
 
-          {userSubscription === "free" && (
+          {/* Banner for anonymous users */}
+          {!isLoggedIn && (
+            <div className="signup-banner">
+              <h3>✨ Your spells are ready</h3>
+              <p>Create a free account to access these spells, save your results, and explore 102 free spells in the full library.</p>
+              <button onClick={() => navigate("/signup")} className="primary-btn" type="button">
+                Create Free Account
+              </button>
+            </div>
+          )}
+
+          {/* Banner for free users (logged in but not premium) */}
+          {isLoggedIn && userSubscription === "free" && (
             <div className="upgrade-banner">
               <p>✨ Showing 3 of 8 recommended spells</p>
               <button onClick={() => navigate("/subscribe")} className="upgrade-btn" type="button">
@@ -335,7 +359,11 @@ function SpellQuiz() {
 
           <div className="results-grid">
             {recommendations.map((spell) => (
-              <div key={spell.id} className="result-card" onClick={() => navigate(`/spell/${spell.id}`)}>
+              <div 
+                key={spell.id} 
+                className={`result-card ${!isLoggedIn ? 'preview-card' : ''}`} 
+                onClick={() => handleSpellClick(spell.id)}
+              >
                 {spell.imageUrl && <img src={spell.imageUrl} alt={spell.title} />}
                 <div className="result-content">
                   <h3>{spell.title}</h3>
@@ -344,6 +372,9 @@ function SpellQuiz() {
                     <span className="badge">{spell.timeRequired}</span>
                   </div>
                   <p>{spell.whenToUse}</p>
+                  {!isLoggedIn && (
+                    <span className="login-hint">Create account to access →</span>
+                  )}
                 </div>
               </div>
             ))}
@@ -353,9 +384,15 @@ function SpellQuiz() {
             <button onClick={restartQuiz} className="secondary-btn" type="button">
               Take Quiz Again
             </button>
-            <button onClick={() => navigate("/library")} className="primary-btn" type="button">
-              Browse All Spells
-            </button>
+            {isLoggedIn ? (
+              <button onClick={() => navigate("/library")} className="primary-btn" type="button">
+                Browse All Spells
+              </button>
+            ) : (
+              <button onClick={() => navigate("/signup")} className="primary-btn" type="button">
+                Create Free Account
+              </button>
+            )}
           </div>
         </div>
       </div>

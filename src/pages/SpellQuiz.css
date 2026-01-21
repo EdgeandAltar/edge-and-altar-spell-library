@@ -102,6 +102,47 @@
   margin-bottom: 32px;
 }
 
+/* Signup banner for anonymous users */
+.signup-banner {
+  background: linear-gradient(135deg, #f5f0e8 0%, #e8e0d5 100%);
+  border: 1px solid #d4c8b8;
+  border-radius: 12px;
+  padding: 28px 32px;
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.signup-banner h3 {
+  margin: 0 0 8px 0;
+  font-size: 1.35rem;
+  color: #7D5E4F;
+}
+
+.signup-banner p {
+  margin: 0 0 20px 0;
+  color: #5c534a;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.signup-banner .primary-btn {
+  background: linear-gradient(135deg, #7D5E4F 0%, #9D7B6B 100%);
+  color: #fff;
+  border: none;
+  padding: 14px 32px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.signup-banner .primary-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(125, 94, 79, 0.3);
+}
+
+/* Upgrade banner for free logged-in users */
 .upgrade-banner {
   background: linear-gradient(135deg, #7D5E4F 0%, #9D7B6B 100%);
   color: white;
@@ -155,6 +196,15 @@
   box-shadow: 0 8px 24px rgba(125, 94, 79, 0.15);
 }
 
+/* Preview card styling for anonymous users */
+.result-card.preview-card {
+  position: relative;
+}
+
+.result-card.preview-card:hover {
+  box-shadow: 0 8px 24px rgba(125, 94, 79, 0.2);
+}
+
 .result-card img {
   width: 100%;
   height: 200px;
@@ -191,6 +241,15 @@
   color: #666;
   font-size: 14px;
   line-height: 1.6;
+}
+
+/* Login hint for anonymous users on spell cards */
+.login-hint {
+  display: block;
+  margin-top: 12px;
+  font-size: 0.85rem;
+  color: #9D7B6B;
+  font-weight: 600;
 }
 
 /* Quiz Actions */
@@ -249,7 +308,20 @@
   .results-grid {
     grid-template-columns: 1fr;
   }
+
+  .signup-banner {
+    padding: 24px 20px;
+  }
+
+  .signup-banner h3 {
+    font-size: 1.2rem;
+  }
+
+  .signup-banner p {
+    font-size: 0.95rem;
+  }
 }
+
 /* Premium locked spell cards */
 .spell-card.premium-locked {
   position: relative;
