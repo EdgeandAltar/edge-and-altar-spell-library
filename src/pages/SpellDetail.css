@@ -154,6 +154,29 @@
   border-color: #7D5E4F;
 }
 
+/* History Button (Purple/Lavender) */
+.history-btn-detail {
+  padding: 12px 24px;
+  background: white;
+  border: 2px solid #9D7B9D;
+  border-radius: 8px;
+  color: #7D5E7D;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.history-btn-detail:hover {
+  background: linear-gradient(135deg, #9D7B9D 0%, #8D6B8D 100%);
+  color: white;
+  border-color: #9D7B9D;
+}
+
 /* Favorite Button on Detail Page */
 .favorite-btn-detail {
   background: white;

@@ -2,13 +2,16 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { generateSpellPDF } from "../pdfService";
-import { addJournalEntry } from "../journalService";
+import { addJournalEntry, getUserJournal } from "../journalService";
 import Toast from "../components/Toast";
+import EnhancedJournalEntryForm from "../components/EnhancedJournalEntryForm";
+import SpellHistoryView from "../components/SpellHistoryView";
 import {
   HiOutlineHeart,
   HiHeart,
   HiOutlineDownload,
   HiOutlinePencilAlt,
+  HiOutlineBookOpen,
 } from "react-icons/hi";
 import "./SpellDetail.css";
 
@@ -31,11 +34,9 @@ function SpellDetail() {
   const [favorites, setFavorites] = useState([]);
   const [isFavorited, setIsFavorited] = useState(false);
 
-  const [showJournalModal, setShowJournalModal] = useState(false);
-  const [journalRating, setJournalRating] = useState(0);
-  const [journalNotes, setJournalNotes] = useState("");
-  const [journalTags, setJournalTags] = useState([]);
-  const [journalDate, setJournalDate] = useState(new Date().toISOString().split('T')[0]);
+  const [showEnhancedJournal, setShowEnhancedJournal] = useState(false);
+  const [showSpellHistory, setShowSpellHistory] = useState(false);
+  const [journalEntries, setJournalEntries] = useState([]);
 
   const [relatedSpells, setRelatedSpells] = useState([]);
 
@@ -213,30 +214,31 @@ function SpellDetail() {
     }
   };
 
-  const handleAddToJournal = async () => {
+  const handleAddToJournal = async (entryData) => {
     if (!userId || !spell) {
       setToast({ message: "Please log in to add journal entries.", type: "error" });
       return;
     }
 
-    const entry = await addJournalEntry(userId, {
-      spellId: spell.id,
-      spellTitle: spell.title,
-      date: journalDate,
-      rating: journalRating,
-      notes: journalNotes,
-      tags: journalTags,
-    });
+    const entry = await addJournalEntry(userId, entryData);
 
     if (entry) {
-      setToast({ message: "Added to your journal!", type: "success" });
-      setShowJournalModal(false);
-      setJournalRating(0);
-      setJournalNotes("");
-      setJournalTags([]);
-      setJournalDate(new Date().toISOString().split('T')[0]);
+      setToast({ message: "✨ Your practice has been recorded", type: "success" });
+      setShowEnhancedJournal(false);
+
+      // Refresh journal entries
+      const updated = await getUserJournal(userId);
+      setJournalEntries(updated);
     } else {
       setToast({ message: "Failed to add to journal. Please try again.", type: "error" });
+    }
+  };
+
+  const handleJournalUpdate = async () => {
+    // Refresh journal entries after update/delete
+    if (userId) {
+      const updated = await getUserJournal(userId);
+      setJournalEntries(updated);
     }
   };
 
@@ -260,14 +262,6 @@ function SpellDetail() {
     } else {
       setToast({ message: "Failed to log. Please try again.", type: "error" });
     }
-  };
-
-  const addTag = (tag) => {
-    if (tag && !journalTags.includes(tag)) setJournalTags((prev) => [...prev, tag]);
-  };
-
-  const removeTag = (tagToRemove) => {
-    setJournalTags((prev) => prev.filter((tag) => tag !== tagToRemove));
   };
 
   const handleDownloadPDF = () => {
@@ -360,9 +354,10 @@ function SpellDetail() {
 
         setSpell(spellData);
 
-        const [level, favs] = await Promise.all([
+        const [level, favs, journal] = await Promise.all([
           fetchAccessLevel(session.accessToken, session.user.id),
           fetchFavorites(session.accessToken, session.user.id),
+          getUserJournal(session.user.id),
         ]);
 
         if (!alive) return;
@@ -370,6 +365,7 @@ function SpellDetail() {
         setUserSubscription(level);
         setFavorites(favs);
         setIsFavorited(favs.includes(String(spellData.id)));
+        setJournalEntries(journal || []);
 
         await findRelatedSpells(session.accessToken, spellData, level);
       } catch (err) {
@@ -529,10 +525,19 @@ function SpellDetail() {
 
                 <button
                   className="journal-btn-detail"
-                  onClick={() => setShowJournalModal(true)}
+                  onClick={() => setShowEnhancedJournal(true)}
                   type="button"
                 >
-                  <HiOutlinePencilAlt /> Add with Notes
+                  <HiOutlinePencilAlt /> Full Journal Entry
+                </button>
+
+                <button
+                  className="history-btn-detail"
+                  onClick={() => setShowSpellHistory(true)}
+                  type="button"
+                  title="View spell history"
+                >
+                  <HiOutlineBookOpen /> History
                 </button>
               </div>
 
@@ -640,83 +645,22 @@ function SpellDetail() {
         </div>
       )}
 
-      {showJournalModal && (
-        <div className="modal-overlay" onClick={() => setShowJournalModal(false)}>
-          <div className="journal-modal" onClick={(e) => e.stopPropagation()}>
-            <h2>Add to Journal</h2>
-            <p className="modal-subtitle">{spell.title}</p>
+      {showEnhancedJournal && (
+        <EnhancedJournalEntryForm
+          spell={spell}
+          onSave={handleAddToJournal}
+          onCancel={() => setShowEnhancedJournal(false)}
+        />
+      )}
 
-            <div className="modal-section">
-              <label>When did you perform this?</label>
-              <input
-                type="date"
-                className="date-picker"
-                value={journalDate}
-                onChange={(e) => setJournalDate(e.target.value)}
-                max={new Date().toISOString().split('T')[0]}
-              />
-            </div>
-
-            <div className="modal-section">
-              <label>How effective was it?</label>
-              <div className="star-rating">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    className={`star-btn ${star <= journalRating ? "filled" : ""}`}
-                    onClick={() => setJournalRating(star)}
-                    type="button"
-                  >
-                    ★
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="modal-section">
-              <label>Notes (optional)</label>
-              <textarea
-                placeholder="How did it feel? What happened? Any modifications you made?"
-                value={journalNotes}
-                onChange={(e) => setJournalNotes(e.target.value)}
-                rows="4"
-              />
-            </div>
-
-            <div className="modal-section">
-              <label>Quick Tags (optional)</label>
-              <div className="tag-suggestions">
-                {["worked well", "felt powerful", "subtle shift", "will try again", "modified it"].map((tag) => (
-                  <button key={tag} className="tag-btn" onClick={() => addTag(tag)} type="button">
-                    + {tag}
-                  </button>
-                ))}
-              </div>
-
-              {journalTags.length > 0 && (
-                <div className="selected-tags">
-                  {journalTags.map((tag) => (
-                    <span key={tag} className="tag">
-                      {tag}
-                      <button onClick={() => removeTag(tag)} type="button">
-                        ×
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="modal-actions">
-              <button className="cancel-btn" onClick={() => setShowJournalModal(false)} type="button">
-                Cancel
-              </button>
-              <button className="save-btn" onClick={handleAddToJournal} type="button">
-                Save to Journal
-              </button>
-            </div>
-          </div>
-        </div>
+      {showSpellHistory && (
+        <SpellHistoryView
+          spell={spell}
+          allEntries={journalEntries}
+          userId={userId}
+          onClose={() => setShowSpellHistory(false)}
+          onUpdate={handleJournalUpdate}
+        />
       )}
 
       {toast && (

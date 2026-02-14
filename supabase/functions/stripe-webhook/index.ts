@@ -47,6 +47,9 @@ serve(async (req) => {
 
     console.log("Received event:", event.type);
 
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+
+    // --- checkout.session.completed / async_payment_succeeded ---
     if (
       event.type === "checkout.session.completed" ||
       event.type === "checkout.session.async_payment_succeeded"
@@ -54,29 +57,173 @@ serve(async (req) => {
       const session = event.data.object as Stripe.Checkout.Session;
       const userId = session.client_reference_id;
 
-      console.log("Processing checkout for user:", userId, "session:", session.id);
+      console.log("Processing checkout for user:", userId, "session:", session.id, "mode:", session.mode);
 
       if (!userId) {
         console.error("No client_reference_id on session:", session.id);
         return new Response("Missing client_reference_id", { status: 200 });
       }
 
-      const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+      if (session.mode === "subscription") {
+        // Monthly subscription checkout
+        const subscriptionId = session.subscription as string;
+        const customerId = session.customer as string;
 
-      // Upsert so missing profile row doesn't block upgrades
-      const { error } = await supabaseAdmin
-        .from("profiles")
-        .upsert(
-          { id: userId, access_level: "premium" },
-          { onConflict: "id" }
-        );
+        // Fetch the subscription to get current_period_end
+        let periodEnd: string | null = null;
+        if (subscriptionId) {
+          try {
+            const sub = await stripe.subscriptions.retrieve(subscriptionId);
+            periodEnd = new Date(sub.current_period_end * 1000).toISOString();
+          } catch (err) {
+            console.warn("Could not fetch subscription details:", err);
+          }
+        }
 
-      if (error) {
-        console.error("Failed to upsert profile:", error);
-        return new Response("DB upsert failed", { status: 200 });
+        const { error } = await supabaseAdmin
+          .from("profiles")
+          .upsert(
+            {
+              id: userId,
+              access_level: "premium",
+              subscription_type: "monthly",
+              stripe_customer_id: customerId,
+              stripe_subscription_id: subscriptionId,
+              subscription_expires_at: periodEnd,
+            },
+            { onConflict: "id" }
+          );
+
+        if (error) {
+          console.error("Failed to upsert profile (subscription):", error);
+          return new Response("DB upsert failed", { status: 200 });
+        }
+
+        console.log(`✅ Monthly premium granted to user ${userId} via subscription ${subscriptionId}`);
+      } else {
+        // One-time payment (lifetime)
+        const { error } = await supabaseAdmin
+          .from("profiles")
+          .upsert(
+            {
+              id: userId,
+              access_level: "premium",
+              subscription_type: "lifetime",
+            },
+            { onConflict: "id" }
+          );
+
+        if (error) {
+          console.error("Failed to upsert profile (lifetime):", error);
+          return new Response("DB upsert failed", { status: 200 });
+        }
+
+        console.log(`✅ Lifetime premium granted to user ${userId} via session ${session.id}`);
       }
 
-      console.log(`✅ Premium granted to user ${userId} via session ${session.id}`);
+      return new Response("ok", { status: 200 });
+    }
+
+    // --- customer.subscription.updated ---
+    if (event.type === "customer.subscription.updated") {
+      const subscription = event.data.object as Stripe.Subscription;
+      const customerId = subscription.customer as string;
+
+      console.log("Subscription updated:", subscription.id, "status:", subscription.status, "customer:", customerId);
+
+      // Look up user by stripe_customer_id
+      const { data: profile, error: lookupErr } = await supabaseAdmin
+        .from("profiles")
+        .select("id, subscription_type")
+        .eq("stripe_customer_id", customerId)
+        .maybeSingle();
+
+      if (lookupErr || !profile) {
+        console.error("Could not find profile for customer:", customerId, lookupErr);
+        return new Response("Profile not found", { status: 200 });
+      }
+
+      // Don't downgrade lifetime users
+      if (profile.subscription_type === "lifetime") {
+        console.log("Skipping update for lifetime user:", profile.id);
+        return new Response("ok", { status: 200 });
+      }
+
+      const periodEnd = new Date(subscription.current_period_end * 1000).toISOString();
+
+      if (subscription.status === "active" || subscription.status === "trialing") {
+        const { error } = await supabaseAdmin
+          .from("profiles")
+          .update({
+            access_level: "premium",
+            subscription_expires_at: periodEnd,
+            stripe_subscription_id: subscription.id,
+          })
+          .eq("id", profile.id);
+
+        if (error) console.error("Failed to update profile (sub updated):", error);
+        else console.log(`✅ Subscription updated for user ${profile.id}, expires ${periodEnd}`);
+      } else if (subscription.status === "past_due") {
+        // Keep premium for now; Stripe will retry payment
+        const { error } = await supabaseAdmin
+          .from("profiles")
+          .update({ subscription_expires_at: periodEnd })
+          .eq("id", profile.id);
+
+        if (error) console.error("Failed to update expiry (past_due):", error);
+        else console.log(`⚠️ Subscription past_due for user ${profile.id}, keeping premium`);
+      }
+
+      return new Response("ok", { status: 200 });
+    }
+
+    // --- customer.subscription.deleted ---
+    if (event.type === "customer.subscription.deleted") {
+      const subscription = event.data.object as Stripe.Subscription;
+      const customerId = subscription.customer as string;
+
+      console.log("Subscription deleted:", subscription.id, "customer:", customerId);
+
+      const { data: profile, error: lookupErr } = await supabaseAdmin
+        .from("profiles")
+        .select("id, subscription_type")
+        .eq("stripe_customer_id", customerId)
+        .maybeSingle();
+
+      if (lookupErr || !profile) {
+        console.error("Could not find profile for customer:", customerId, lookupErr);
+        return new Response("Profile not found", { status: 200 });
+      }
+
+      // Don't downgrade lifetime users
+      if (profile.subscription_type === "lifetime") {
+        console.log("Skipping downgrade for lifetime user:", profile.id);
+        return new Response("ok", { status: 200 });
+      }
+
+      const { error } = await supabaseAdmin
+        .from("profiles")
+        .update({
+          access_level: "free",
+          subscription_type: null,
+          stripe_subscription_id: null,
+          subscription_expires_at: null,
+        })
+        .eq("id", profile.id);
+
+      if (error) {
+        console.error("Failed to downgrade profile:", error);
+      } else {
+        console.log(`⬇️ User ${profile.id} downgraded to free (subscription cancelled)`);
+      }
+
+      return new Response("ok", { status: 200 });
+    }
+
+    // --- invoice.payment_failed ---
+    if (event.type === "invoice.payment_failed") {
+      const invoice = event.data.object as Stripe.Invoice;
+      console.log(`⚠️ Payment failed for invoice ${invoice.id}, customer ${invoice.customer}. Stripe will retry.`);
       return new Response("ok", { status: 200 });
     }
 

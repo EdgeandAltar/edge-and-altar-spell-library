@@ -3,12 +3,14 @@ import { useNavigate } from "react-router-dom";
 import {
   getUserJournal,
   deleteJournalEntry,
+  updateJournalEntry,
   groupEntriesByDate,
   formatTimelineDate,
   getMoonPhaseForDate,
 } from "../journalService";
-import { HiOutlineTrash, HiOutlineStar } from "react-icons/hi";
+import { HiOutlineTrash, HiOutlineStar, HiOutlinePencilAlt, HiOutlineChevronDown, HiOutlineChevronUp } from "react-icons/hi";
 import { HiStar } from "react-icons/hi";
+import EnhancedJournalEntryForm from "../components/EnhancedJournalEntryForm";
 import "./SpellJournal.css";
 import MoonPhaseWidget from "../components/MoonPhaseWidget";
 
@@ -17,6 +19,8 @@ function SpellJournal() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all"); // all, this-month, with-notes
   const [userId, setUserId] = useState(null);
+  const [expandedEntry, setExpandedEntry] = useState(null);
+  const [editingEntry, setEditingEntry] = useState(null);
   const navigate = useNavigate();
 
   // Get user ID from localStorage
@@ -84,7 +88,7 @@ function SpellJournal() {
   }, []);
 
   const handleDelete = async (entryId) => {
-    if (!window.confirm("Delete this journal entry?")) return;
+    if (!window.confirm("Delete this journal entry? This cannot be undone.")) return;
 
     try {
       if (!userId) {
@@ -95,10 +99,36 @@ function SpellJournal() {
       const success = await deleteJournalEntry(userId, entryId);
       if (success) {
         setEntries((prev) => prev.filter((e) => e.id !== entryId));
+        setExpandedEntry(null);
       }
     } catch (err) {
       console.error("[SpellJournal] delete error:", err);
     }
+  };
+
+  const handleEditEntry = async (updatedEntry) => {
+    if (!userId) {
+      navigate("/login");
+      return;
+    }
+
+    const success = await updateJournalEntry(userId, updatedEntry.id, updatedEntry);
+    if (success) {
+      // Refresh entries
+      const updated = await getUserJournal(userId);
+      setEntries(updated || []);
+      setEditingEntry(null);
+    }
+  };
+
+  const getMoodEmoji = (mood) => {
+    const moodVal = parseInt(mood) || 0;
+    if (moodVal === 0) return "?";
+    const emojis = {
+      1: "😢", 2: "😞", 3: "😐", 4: "😊", 5: "🙂",
+      6: "😄", 7: "😃", 8: "😁", 9: "🤩", 10: "✨"
+    };
+    return emojis[moodVal] || "🌙";
   };
 
   const getFilteredEntries = () => {
@@ -224,55 +254,155 @@ function SpellJournal() {
                   <div className="date-line"></div>
                 </div>
 
-                <div className="timeline-entries">
-                  {dayEntries.map((entry) => (
-                    <div key={entry.id} className="timeline-entry">
-                      <div className="entry-type-indicator">
-                        {entry.rating || entry.notes ? (
-                          <span className="detailed-icon">🪶</span>
-                        ) : (
-                          <span className="quick-log-icon">✓</span>
-                        )}
-                      </div>
+<div className="timeline-entries">
+                  {dayEntries.map((entry) => {
+                    const isExpanded = expandedEntry === entry.id;
+                    const hasExtendedData = entry.intention || entry.moodBefore || entry.moodAfter || entry.wouldDoAgain !== null;
 
-                      <div className="entry-content">
-                        <div className="entry-header">
-                          <h4
-                            onClick={() => navigate(`/spell/${entry.spellId}`)}
-                            className="spell-link"
-                          >
-                            {entry.spellTitle}
-                          </h4>
-                          <button
-                            className="delete-btn"
-                            onClick={() => handleDelete(entry.id)}
-                            aria-label="Delete entry"
-                            type="button"
-                          >
-                            <HiOutlineTrash />
-                          </button>
+                    return (
+                      <div key={entry.id} className={`timeline-entry ${isExpanded ? "expanded" : ""}`}>
+                        <div className="entry-type-indicator">
+                          {entry.rating || entry.notes ? (
+                            <span className="detailed-icon">🪶</span>
+                          ) : (
+                            <span className="quick-log-icon">✓</span>
+                          )}
                         </div>
 
-                        {entry.rating && <div className="entry-rating">{renderStars(entry.rating)}</div>}
-
-                        {entry.notes && <p className="entry-notes">{entry.notes}</p>}
-
-                        {entry.tags && entry.tags.length > 0 && (
-                          <div className="entry-tags">
-                            {entry.tags.map((tag, i) => (
-                              <span key={i} className="tag">
-                                {tag}
-                              </span>
-                            ))}
+                        <div className="entry-content">
+                          <div className="entry-header">
+                            <div className="entry-title-section">
+                              <h4
+                                onClick={() => navigate(`/spell/${entry.spellId}`)}
+                                className="spell-link"
+                              >
+                                {entry.spellTitle}
+                              </h4>
+                              {hasExtendedData && (
+                                <button
+                                  className="expand-toggle"
+                                  onClick={() => setExpandedEntry(isExpanded ? null : entry.id)}
+                                  type="button"
+                                  aria-label={isExpanded ? "Collapse details" : "Expand details"}
+                                >
+                                  {isExpanded ? <HiOutlineChevronUp /> : <HiOutlineChevronDown />}
+                                  {isExpanded ? "Hide details" : "Show full details"}
+                                </button>
+                              )}
+                            </div>
+                            <div className="entry-actions">
+                              <button
+                                className="edit-btn-journal"
+                                onClick={() => setEditingEntry(entry)}
+                                aria-label="Edit entry"
+                                type="button"
+                              >
+                                <HiOutlinePencilAlt />
+                              </button>
+                              <button
+                                className="delete-btn"
+                                onClick={() => handleDelete(entry.id)}
+                                aria-label="Delete entry"
+                                type="button"
+                              >
+                                <HiOutlineTrash />
+                              </button>
+                            </div>
                           </div>
-                        )}
 
-                        {!entry.rating && !entry.notes && (
-                          <p className="quick-log-message">Logged as performed ✨</p>
-                        )}
+                          {/* Always visible preview */}
+                          {entry.rating && <div className="entry-rating">{renderStars(entry.rating)}</div>}
+
+                          {entry.notes && !isExpanded && (
+                            <p className="entry-notes preview">
+                              {entry.notes.length > 150 ? `${entry.notes.substring(0, 150)}...` : entry.notes}
+                            </p>
+                          )}
+
+                          {entry.tags && entry.tags.length > 0 && !isExpanded && (
+                            <div className="entry-tags">
+                              {entry.tags.slice(0, 3).map((tag, i) => (
+                                <span key={i} className="tag">
+                                  {tag}
+                                </span>
+                              ))}
+                              {entry.tags.length > 3 && (
+                                <span className="tag-more">+{entry.tags.length - 3} more</span>
+                              )}
+                            </div>
+                          )}
+
+                          {!entry.rating && !entry.notes && !hasExtendedData && (
+                            <p className="quick-log-message">Logged as performed ✨</p>
+                          )}
+
+                          {/* Expanded details */}
+                          {isExpanded && (
+                            <div className="entry-expanded-details">
+                              {/* Mood Before/After */}
+                              {(entry.moodBefore || entry.moodAfter) && (
+                                <div className="mood-row-journal">
+                                  {entry.moodBefore && (
+                                    <div className="mood-item-journal">
+                                      <span className="mood-label">Before:</span>
+                                      <span className="mood-value">
+                                        {getMoodEmoji(entry.moodBefore)} {entry.moodBefore}/10
+                                      </span>
+                                    </div>
+                                  )}
+                                  {entry.moodAfter && (
+                                    <div className="mood-item-journal">
+                                      <span className="mood-label">After:</span>
+                                      <span className="mood-value">
+                                        {getMoodEmoji(entry.moodAfter)} {entry.moodAfter}/10
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* Intention */}
+                              {entry.intention && (
+                                <div className="entry-section-journal">
+                                  <div className="section-label-journal">💭 Intention</div>
+                                  <div className="section-content-journal">{entry.intention}</div>
+                                </div>
+                              )}
+
+                              {/* Full Notes */}
+                              {entry.notes && (
+                                <div className="entry-section-journal">
+                                  <div className="section-label-journal">📝 Notes</div>
+                                  <div className="section-content-journal">{entry.notes}</div>
+                                </div>
+                              )}
+
+                              {/* Would Do Again */}
+                              {entry.wouldDoAgain !== null && (
+                                <div className="entry-section-journal">
+                                  <div className="section-label-journal">Would do again?</div>
+                                  <div className="section-content-journal">
+                                    {entry.wouldDoAgain ? "✓ Yes" : "✗ No"}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* All Tags */}
+                              {entry.tags && entry.tags.length > 0 && (
+                                <div className="entry-tags-full">
+                                  {entry.tags.map((tag, i) => (
+                                    <span key={i} className="tag">
+                                      {tag}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             ))}
@@ -295,6 +425,16 @@ function SpellJournal() {
             </div>
           </div>
         </>
+      )}
+
+      {/* Edit Entry Modal */}
+      {editingEntry && (
+        <EnhancedJournalEntryForm
+          spell={{ id: editingEntry.spellId, title: editingEntry.spellTitle }}
+          initialEntry={editingEntry}
+          onSave={handleEditEntry}
+          onCancel={() => setEditingEntry(null)}
+        />
       )}
     </div>
   );

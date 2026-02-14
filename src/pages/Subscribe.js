@@ -15,6 +15,7 @@ function Subscribe() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [accessToken, setAccessToken] = useState(null);
+  const [selectedPlan, setSelectedPlan] = useState("lifetime");
 
   // Get the access token on mount
   useEffect(() => {
@@ -52,7 +53,7 @@ function Subscribe() {
       }
 
       const origin = window.location.origin;
-      console.log("[checkout] invoking create-checkout with origin:", origin);
+      console.log("[checkout] invoking create-checkout with origin:", origin, "plan:", selectedPlan);
 
       // Use direct fetch instead of supabase.functions.invoke
       const response = await fetch(
@@ -64,7 +65,7 @@ function Subscribe() {
             "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indtc2VrenNvY3ZtZnVkbWpha2h1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0OTU1MDMsImV4cCI6MjA4NDA3MTUwM30.1xx9jyZdByOKNphMFHJ6CVOYRgv2fiH8fw-Gj2p4rlQ",
             "Authorization": `Bearer ${accessToken}`,
           },
-          body: JSON.stringify({ origin }),
+          body: JSON.stringify({ origin, plan: selectedPlan }),
         }
       );
 
@@ -96,18 +97,69 @@ function Subscribe() {
       <section className="subscribe-hero">
         <h1>Unlock Your Full Spell Library</h1>
         <p className="hero-description">
-          One-time purchase. Lifetime access. Instant unlock.
+          Choose the plan that works for you
         </p>
       </section>
 
-      {/* Pricing Card */}
+      {/* Pricing Cards */}
       <section className="pricing-section">
         <div className="pricing-cards">
-          <div className="pricing-card featured selected">
-            <div className="best-value-badge">LIFETIME ACCESS</div>
+          {/* Monthly Plan */}
+          <div
+            className={`pricing-card${selectedPlan === "monthly" ? " selected" : ""}`}
+            onClick={() => setSelectedPlan("monthly")}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && setSelectedPlan("monthly")}
+          >
+            <div className="plan-header">
+              <h3>Monthly</h3>
+
+              <div className="price-display">
+                <span className="currency">$</span>
+                <span className="amount">7</span>
+                <span className="period">/month</span>
+              </div>
+
+              <p className="plan-description">
+                Cancel anytime. Full access while subscribed.
+              </p>
+            </div>
+
+            <ul className="feature-list">
+              <li>
+                <span className="check">✓</span> 100+ premium spells
+              </li>
+              <li>
+                <span className="check">✓</span> New spells added weekly
+              </li>
+              <li>
+                <span className="check">✓</span> Advanced search & filters
+              </li>
+              <li>
+                <span className="check">✓</span> Save favorites
+              </li>
+              <li>
+                <span className="check">✓</span> Unlimited custom spells
+              </li>
+              <li>
+                <span className="check">✓</span> Cancel anytime
+              </li>
+            </ul>
+          </div>
+
+          {/* Lifetime Plan */}
+          <div
+            className={`pricing-card featured${selectedPlan === "lifetime" ? " selected" : ""}`}
+            onClick={() => setSelectedPlan("lifetime")}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && setSelectedPlan("lifetime")}
+          >
+            <div className="best-value-badge">BEST VALUE</div>
 
             <div className="plan-header">
-              <h3>Premium Spell Library</h3>
+              <h3>Lifetime Access</h3>
 
               <div className="price-display">
                 <span className="currency">$</span>
@@ -155,7 +207,12 @@ function Subscribe() {
           disabled={loading}
           type="button"
         >
-          {loading ? "Redirecting..." : "Unlock Premium (One-Time Purchase)"}
+          {loading
+            ? "Redirecting..."
+            : selectedPlan === "monthly"
+              ? "Subscribe — $7/month"
+              : "Unlock Premium — $49 One-Time"
+          }
         </button>
       </section>
 
@@ -218,7 +275,7 @@ function Subscribe() {
           </div>
           <div className="trust-item">
             <span className="trust-icon">✓</span>
-            <span>One-time purchase (no subscription)</span>
+            <span>Cancel monthly anytime</span>
           </div>
         </div>
       </section>

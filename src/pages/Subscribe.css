@@ -38,19 +38,15 @@
   box-sizing: border-box;
 }
 
-/* Pricing Cards */
+/* Pricing Cards — two-column layout */
 .pricing-cards {
-  /* Single card layout */
   display: grid;
-  grid-template-columns: 1fr;
-
-  /* ✅ This is the key: cap width so it doesn't stretch */
+  grid-template-columns: repeat(2, 1fr);
   max-width: 980px;
   margin: 0 auto 32px;
-
   gap: 24px;
   box-sizing: border-box;
-  justify-items: center;
+  align-items: start;
 }
 
 .pricing-card {
@@ -62,13 +58,14 @@
   border: 3px solid transparent;
   position: relative;
   box-sizing: border-box;
-
-  /* ✅ make the card a sane width on desktop */
   width: 100%;
-  max-width: 860px;
-
-  /* ✅ center header content */
   text-align: center;
+  cursor: pointer;
+}
+
+.pricing-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(93, 78, 55, 0.15);
 }
 
 .pricing-card.selected {
@@ -142,19 +139,13 @@
   font-size: 14px;
 }
 
-/* ✅ Feature List (centered block + readable left-aligned text) */
-/* Feature List — truly centered as a block */
+/* Feature List — centered block with left-aligned text */
 .feature-list {
   list-style: none;
   padding: 0;
   margin: 0;
-  display: inline-block;   /* ✅ makes the UL shrink to its contents */
-  text-align: left;        /* ✅ keeps readable left alignment */
-}
-
-/* Because UL is inline-block, we center it by centering its parent */
-.pricing-card {
-  text-align: center;      /* you already have this — keep it */
+  display: inline-block;
+  text-align: left;
 }
 
 .feature-list li {
@@ -306,6 +297,7 @@
   }
 
   .pricing-cards {
+    grid-template-columns: 1fr;
     max-width: 100%;
   }
 
