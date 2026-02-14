@@ -1,9 +1,9 @@
 import SunCalc from 'suncalc';
 
 // Get current moon phase data
-export const getCurrentMoonPhase = () => {
-  const now = new Date();
-  const illumination = SunCalc.getMoonIllumination(now);
+// Accepts optional date parameter to calculate moon phase for any date
+export const getCurrentMoonPhase = (date = new Date()) => {
+  const illumination = SunCalc.getMoonIllumination(date);
   
   // Phase is 0-1 where:
   // 0 = New Moon
@@ -56,7 +56,7 @@ export const getCurrentMoonPhase = () => {
     phaseEmoji,
     phaseDescription,
     illumination: Math.round(illumination.fraction * 100), // Percentage illuminated
-    date: now
+    date
   };
 };
 

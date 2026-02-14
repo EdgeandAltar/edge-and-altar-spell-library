@@ -20,6 +20,8 @@ import SpellQuiz from "./pages/SpellQuiz";
 import SpellJournal from "./pages/SpellJournal";
 import Favorites from "./pages/Favorites";
 import Account from "./pages/Account";
+import MyCustomSpells from "./pages/MyCustomSpells";
+import CustomSpellForm from "./components/CustomSpellForm";
 
 import "./App.css";
 
@@ -231,6 +233,11 @@ function App() {
         <Route path="/journal" element={user ? <SpellJournal /> : <Navigate to="/login" replace />} />
         <Route path="/favorites" element={user ? <Favorites /> : <Navigate to="/login" replace />} />
         <Route path="/account" element={user ? <Account /> : <Navigate to="/login" replace />} />
+
+        {/* Custom Spells Routes */}
+        <Route path="/custom-spells" element={user ? <MyCustomSpells /> : <Navigate to="/login" replace />} />
+        <Route path="/custom-spells/new" element={user ? <CustomSpellForm mode="create" /> : <Navigate to="/login" replace />} />
+        <Route path="/custom-spells/edit/:id" element={user ? <CustomSpellForm mode="edit" /> : <Navigate to="/login" replace />} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>

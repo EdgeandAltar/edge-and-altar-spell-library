@@ -82,6 +82,7 @@ export const addJournalEntry = async (userId, entry) => {
       user_id: userId,
       spell_id: entry.spellId,
       spell_title: entry.spellTitle || "Untitled Spell",
+      entry_date: entry.date || new Date().toISOString().split('T')[0],
       rating: entry.rating ?? null,
       notes: entry.notes ?? "",
       tags: Array.isArray(entry.tags) ? entry.tags : [],
@@ -197,4 +198,69 @@ export const getRecentEntries = (entries, count = 10) => {
   return [...(entries || [])]
     .sort((a, b) => new Date(b.date) - new Date(a.date))
     .slice(0, count);
+};
+
+/**
+ * Group journal entries by date for timeline view
+ * @param {Array} entries - Journal entries sorted by date DESC
+ * @returns {Object} - { "2026-02-13": [...entries], "2026-02-12": [...] }
+ */
+export const groupEntriesByDate = (entries) => {
+  const grouped = {};
+
+  (entries || []).forEach(entry => {
+    const dateKey = new Date(entry.date).toISOString().split('T')[0];
+    if (!grouped[dateKey]) {
+      grouped[dateKey] = [];
+    }
+    grouped[dateKey].push(entry);
+  });
+
+  return grouped;
+};
+
+/**
+ * Format date for timeline display
+ * @param {string} dateString - ISO date string
+ * @returns {string} - "Today", "Yesterday", or "Monday, Feb 10"
+ */
+export const formatTimelineDate = (dateString) => {
+  const date = new Date(dateString);
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  // Reset time to midnight for comparison
+  const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const yesterdayOnly = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
+
+  if (dateOnly.getTime() === todayOnly.getTime()) {
+    return "Today";
+  } else if (dateOnly.getTime() === yesterdayOnly.getTime()) {
+    return "Yesterday";
+  } else {
+    return date.toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "short",
+      day: "numeric"
+    });
+  }
+};
+
+/**
+ * Get moon phase emoji for a specific date
+ * @param {string} dateString - ISO date string
+ * @returns {string} - Moon phase emoji
+ */
+export const getMoonPhaseForDate = (dateString) => {
+  try {
+    // Dynamically import to avoid circular dependencies
+    const { getCurrentMoonPhase } = require('./moonPhaseService');
+    const moonData = getCurrentMoonPhase(new Date(dateString));
+    return moonData?.phaseEmoji || "🌙";
+  } catch (err) {
+    console.warn("[journalService] getMoonPhaseForDate error:", err);
+    return "🌙";
+  }
 };

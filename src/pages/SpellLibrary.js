@@ -20,6 +20,7 @@ function SpellLibrary() {
   const [selectedSkill, setSelectedSkill] = useState("");
   const [selectedSeason, setSelectedSeason] = useState("");
   const [selectedTag, setSelectedTag] = useState("");
+  const [showCustomOnly, setShowCustomOnly] = useState(false);
 
   const [userSubscription, setUserSubscription] = useState("free");
   const [favorites, setFavorites] = useState([]);
@@ -109,9 +110,10 @@ function SpellLibrary() {
   ];
 
   const isDefaultView = () =>
-    !searchTerm && !selectedCategory && !selectedTime && !selectedSkill && !selectedSeason && !selectedTag;
+    !searchTerm && !selectedCategory && !selectedTime && !selectedSkill && !selectedSeason && !selectedTag && !showCustomOnly;
 
   const sortWithFeaturedFirst = (spellsList) => {
+    // Don't apply featured sorting if any filter is active (including custom-only)
     if (!isDefaultView()) return spellsList;
 
     const orderMap = new Map(FEATURED_ORDER.map((title, idx) => [title, idx]));
@@ -130,6 +132,7 @@ function SpellLibrary() {
     setSelectedSkill("");
     setSelectedSeason("");
     setSelectedTag("");
+    setShowCustomOnly(false);
   };
 
   const isFavorited = (spellId) => favorites.includes(String(spellId));
@@ -144,9 +147,10 @@ function SpellLibrary() {
 
   // ---------- Direct fetch helpers ----------
 
-  const fetchSpellsDirect = async (token) => {
+  const fetchSpellsDirect = async (token, uid) => {
+    // Fetch both library spells (created_by_user_id IS NULL) and user's custom spells
     const response = await fetch(
-      `${SUPABASE_URL}/rest/v1/spells?select=id,title,when_to_use,category,time_required,skill_level,seasonal_tags,tags,is_premium,image_url,created_at,legacy_id&order=created_at.desc`,
+      `${SUPABASE_URL}/rest/v1/spells?select=id,title,when_to_use,category,time_required,skill_level,seasonal_tags,tags,is_premium,image_url,created_at,legacy_id,created_by_user_id,is_custom&or=(created_by_user_id.is.null,created_by_user_id.eq.${uid})&order=created_at.desc`,
       {
         headers: {
           "apikey": SUPABASE_ANON_KEY,
@@ -175,6 +179,8 @@ function SpellLibrary() {
       imageUrl: s.image_url,
       createdAt: s.created_at,
       legacyId: s.legacy_id,
+      createdByUserId: s.created_by_user_id,
+      isCustom: Boolean(s.is_custom),
     }));
   };
 
@@ -345,7 +351,7 @@ function SpellLibrary() {
       setPageError("");
 
       try {
-        const spellsData = await fetchSpellsDirect(accessToken);
+        const spellsData = await fetchSpellsDirect(accessToken, userId);
         if (!alive) return;
 
         setSpells(spellsData);
@@ -404,6 +410,11 @@ function SpellLibrary() {
       filtered = filtered.filter((spell) => (spell.tags || []).includes(selectedTag));
     }
 
+    // Filter for custom spells only if toggle is active
+    if (showCustomOnly) {
+      filtered = filtered.filter((spell) => spell.isCustom);
+    }
+
     filtered = sortWithFeaturedFirst(filtered);
 
     setFilteredSpells(filtered);
@@ -416,6 +427,7 @@ function SpellLibrary() {
     selectedSkill,
     selectedSeason,
     selectedTag,
+    showCustomOnly,
     userSubscription,
   ]);
 
@@ -517,7 +529,26 @@ function SpellLibrary() {
             ))}
           </select>
 
-          {(searchTerm || selectedCategory || selectedTime || selectedSkill || selectedSeason || selectedTag) && (
+          <button
+            className={`filter-toggle ${showCustomOnly ? "active" : ""}`}
+            onClick={() => setShowCustomOnly(!showCustomOnly)}
+            type="button"
+            style={{
+              padding: "8px 16px",
+              background: showCustomOnly ? "#7D5E4F" : "#f5f3ef",
+              color: showCustomOnly ? "white" : "#7D5E4F",
+              border: `2px solid #7D5E4F`,
+              borderRadius: "6px",
+              cursor: "pointer",
+              fontWeight: "600",
+              fontSize: "14px",
+              transition: "all 0.2s",
+            }}
+          >
+            {showCustomOnly ? "Showing Custom Spells" : "Show My Custom Spells"}
+          </button>
+
+          {(searchTerm || selectedCategory || selectedTime || selectedSkill || selectedSeason || selectedTag || showCustomOnly) && (
             <button className="clear-filters" onClick={clearFilters} type="button">
               Clear Filters
             </button>
@@ -579,6 +610,14 @@ function SpellLibrary() {
 
                 <div className="spell-content">
                   <div className="spell-badges">
+                    {spell.isCustom && <span className="custom-badge" style={{
+                      background: "#7D5E4F",
+                      color: "white",
+                      padding: "4px 10px",
+                      borderRadius: "4px",
+                      fontSize: "12px",
+                      fontWeight: "600"
+                    }}>Custom</span>}
                     {spell.isPremium && <span className="premium-badge">Premium</span>}
                     <span className="time-badge">{spell.timeRequired}</span>
                   </div>

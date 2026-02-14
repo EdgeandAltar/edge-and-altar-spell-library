@@ -185,6 +185,17 @@ function Navigation({ user, isAdmin, adminLoading }) {
                   <button
                     className="dropdown-item"
                     onClick={() => {
+                      navigate("/custom-spells");
+                      setShowDropdown(false);
+                    }}
+                    type="button"
+                  >
+                    My Custom Spells
+                  </button>
+
+                  <button
+                    className="dropdown-item"
+                    onClick={() => {
                       navigate("/account");
                       setShowDropdown(false);
                     }}

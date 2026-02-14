@@ -35,6 +35,7 @@ function SpellDetail() {
   const [journalRating, setJournalRating] = useState(0);
   const [journalNotes, setJournalNotes] = useState("");
   const [journalTags, setJournalTags] = useState([]);
+  const [journalDate, setJournalDate] = useState(new Date().toISOString().split('T')[0]);
 
   const [relatedSpells, setRelatedSpells] = useState([]);
 
@@ -89,7 +90,7 @@ function SpellDetail() {
 
   const fetchSpell = async (token) => {
     const response = await fetch(
-      `${SUPABASE_URL}/rest/v1/spells?id=eq.${id}&select=id,title,when_to_use,category,time_required,skill_level,seasonal_tags,tags,is_premium,image_url,created_at,legacy_id,vibe,supplies_needed,ingredients,instructions,why_this_works,spoken_intention,tips`,
+      `${SUPABASE_URL}/rest/v1/spells?id=eq.${id}&select=id,title,when_to_use,category,time_required,skill_level,seasonal_tags,tags,is_premium,image_url,created_at,legacy_id,vibe,supplies_needed,ingredients,instructions,why_this_works,spoken_intention,tips,created_by_user_id,is_custom`,
       {
         headers: {
           "apikey": SUPABASE_ANON_KEY,
@@ -127,6 +128,8 @@ function SpellDetail() {
       whyThisWorks: s.why_this_works ?? "",
       spokenIntention: s.spoken_intention ?? "",
       tips: s.tips ?? "",
+      createdByUserId: s.created_by_user_id,
+      isCustom: Boolean(s.is_custom),
     };
   };
 
@@ -219,6 +222,7 @@ function SpellDetail() {
     const entry = await addJournalEntry(userId, {
       spellId: spell.id,
       spellTitle: spell.title,
+      date: journalDate,
       rating: journalRating,
       notes: journalNotes,
       tags: journalTags,
@@ -230,8 +234,31 @@ function SpellDetail() {
       setJournalRating(0);
       setJournalNotes("");
       setJournalTags([]);
+      setJournalDate(new Date().toISOString().split('T')[0]);
     } else {
       setToast({ message: "Failed to add to journal. Please try again.", type: "error" });
+    }
+  };
+
+  const handleQuickLog = async () => {
+    if (!userId || !spell) {
+      setToast({ message: "Please log in to track spells.", type: "error" });
+      return;
+    }
+
+    const entry = await addJournalEntry(userId, {
+      spellId: spell.id,
+      spellTitle: spell.title,
+      date: new Date().toISOString().split('T')[0],
+      rating: null,
+      notes: "",
+      tags: [],
+    });
+
+    if (entry) {
+      setToast({ message: "✓ Logged to your journal!", type: "success" });
+    } else {
+      setToast({ message: "Failed to log. Please try again.", type: "error" });
     }
   };
 
@@ -443,13 +470,71 @@ function SpellDetail() {
             </button>
 
             <div className="header-actions">
-              <button
-                className="journal-btn-detail"
-                onClick={() => setShowJournalModal(true)}
-                type="button"
-              >
-                <HiOutlinePencilAlt /> Add to Journal
-              </button>
+              {/* Edit button for user's custom spells */}
+              {spell.isCustom && spell.createdByUserId === userId && (
+                <button
+                  className="edit-custom-btn"
+                  onClick={() => navigate(`/custom-spells/edit/${spell.id}`)}
+                  type="button"
+                  style={{
+                    padding: "10px 18px",
+                    background: "#6a9fb5",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                    fontWeight: "600",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}
+                >
+                  <HiOutlinePencilAlt /> Edit Custom Spell
+                </button>
+              )}
+
+              {/* Use as Template button for library spells */}
+              {!spell.isCustom && (
+                <button
+                  className="template-btn"
+                  onClick={() => navigate("/custom-spells/new", { state: { template: spell } })}
+                  type="button"
+                  style={{
+                    padding: "10px 18px",
+                    background: "#7D5E4F",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                    fontWeight: "600",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}
+                >
+                  <HiOutlinePencilAlt /> Create Custom Version
+                </button>
+              )}
+
+              <div className="journal-actions">
+                <button
+                  className="quick-log-btn-detail"
+                  onClick={handleQuickLog}
+                  type="button"
+                >
+                  ✓ I did this spell
+                </button>
+
+                <button
+                  className="journal-btn-detail"
+                  onClick={() => setShowJournalModal(true)}
+                  type="button"
+                >
+                  <HiOutlinePencilAlt /> Add with Notes
+                </button>
+              </div>
 
               <button
                 className="favorite-btn-detail"
@@ -467,6 +552,7 @@ function SpellDetail() {
           </div>
 
           <div className="spell-tags">
+            {spell.isCustom && <span className="tag" style={{ background: "#7D5E4F", color: "white" }}>Custom</span>}
             {spell.isPremium && <span className="tag premium">Premium</span>}
             <span className="tag">{spell.category}</span>
             <span className="tag">{spell.timeRequired}</span>
@@ -559,6 +645,17 @@ function SpellDetail() {
           <div className="journal-modal" onClick={(e) => e.stopPropagation()}>
             <h2>Add to Journal</h2>
             <p className="modal-subtitle">{spell.title}</p>
+
+            <div className="modal-section">
+              <label>When did you perform this?</label>
+              <input
+                type="date"
+                className="date-picker"
+                value={journalDate}
+                onChange={(e) => setJournalDate(e.target.value)}
+                max={new Date().toISOString().split('T')[0]}
+              />
+            </div>
 
             <div className="modal-section">
               <label>How effective was it?</label>

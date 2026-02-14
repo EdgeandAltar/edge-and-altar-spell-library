@@ -24,7 +24,6 @@ function Footer() {
           <div className="footer-section">
             <h4>Support</h4>
             <a href="mailto:wendy@edgeandaltar.com">Contact</a>
-            <a href="#">Help Center</a>
           </div>
         </div>
       </div>

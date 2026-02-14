@@ -105,7 +105,7 @@ function Home() {
           <div className="stat-label">Curated Spells</div>
         </div>
         <div className="stat-card">
-          <div className="stat-number">5-60min</div>
+          <div className="stat-number">5-60 min</div>
           <div className="stat-label">Time Range</div>
         </div>
         <div className="stat-card">

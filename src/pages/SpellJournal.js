@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getUserJournal, deleteJournalEntry, getRecentEntries } from "../journalService";
+import {
+  getUserJournal,
+  deleteJournalEntry,
+  groupEntriesByDate,
+  formatTimelineDate,
+  getMoonPhaseForDate,
+} from "../journalService";
 import { HiOutlineTrash, HiOutlineStar } from "react-icons/hi";
 import { HiStar } from "react-icons/hi";
 import "./SpellJournal.css";
@@ -9,7 +15,7 @@ import MoonPhaseWidget from "../components/MoonPhaseWidget";
 function SpellJournal() {
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("all"); // all, recent, high-rated
+  const [filter, setFilter] = useState("all"); // all, this-month, with-notes
   const [userId, setUserId] = useState(null);
   const navigate = useNavigate();
 
@@ -98,10 +104,13 @@ function SpellJournal() {
   const getFilteredEntries = () => {
     let filtered = [...entries];
 
-    if (filter === "recent") {
-      return getRecentEntries(filtered, 10);
-    } else if (filter === "high-rated") {
-      filtered = filtered.filter((e) => (e.rating ?? 0) >= 4);
+    if (filter === "this-month") {
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+      filtered = filtered.filter((e) => new Date(e.date) >= startOfMonth);
+    } else if (filter === "with-notes") {
+      filtered = filtered.filter((e) => e.notes && e.notes.trim() !== "");
     }
 
     return filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -168,14 +177,14 @@ function SpellJournal() {
 
       {entries.length === 0 ? (
         <div className="empty-journal">
-          <div className="empty-icon">✨</div>
-          <h2>Ready to start journaling?</h2>
+          <div className="empty-icon">🌙</div>
+          <h2>Your sanctuary awaits</h2>
           <p>
-            Track which spells you've tried, how they worked, and what magic happened. Your
-            practice, your way.
+            Begin tracking your magical practice. Each spell you log becomes part of your personal grimoire,
+            a record of your journey through the craft.
           </p>
           <button className="browse-btn" onClick={() => navigate("/library")} type="button">
-            Browse Spells
+            Explore Spell Library
           </button>
         </div>
       ) : (
@@ -186,62 +195,104 @@ function SpellJournal() {
               onClick={() => setFilter("all")}
               type="button"
             >
-              All Entries
+              All Time
             </button>
             <button
-              className={filter === "recent" ? "active" : ""}
-              onClick={() => setFilter("recent")}
+              className={filter === "this-month" ? "active" : ""}
+              onClick={() => setFilter("this-month")}
               type="button"
             >
-              Recent (10)
+              This Month
             </button>
             <button
-              className={filter === "high-rated" ? "active" : ""}
-              onClick={() => setFilter("high-rated")}
+              className={filter === "with-notes" ? "active" : ""}
+              onClick={() => setFilter("with-notes")}
               type="button"
             >
-              High Rated (4-5★)
+              With Reflections
             </button>
           </div>
 
-          <div className="journal-entries">
-            {filteredEntries.map((entry) => (
-              <div key={entry.id} className="journal-entry">
-                <div className="entry-header">
-                  <div className="entry-title-section">
-                    <h3
-                      onClick={() => navigate(`/spell/${entry.spellId}`)}
-                      className="spell-link"
-                    >
-                      {entry.spellTitle}
-                    </h3>
-                    <span className="entry-date">{formatDate(entry.date)}</span>
+          <div className="timeline-container">
+            {Object.entries(groupEntriesByDate(filteredEntries)).map(([dateKey, dayEntries]) => (
+              <div key={dateKey} className="timeline-date-group">
+                <div className="date-divider">
+                  <div className="date-header">
+                    <span className="moon-phase-emoji">{getMoonPhaseForDate(dateKey)}</span>
+                    <h3>{formatTimelineDate(dateKey)}</h3>
                   </div>
-                  <button
-                    className="delete-btn"
-                    onClick={() => handleDelete(entry.id)}
-                    aria-label="Delete entry"
-                    type="button"
-                  >
-                    <HiOutlineTrash />
-                  </button>
+                  <div className="date-line"></div>
                 </div>
 
-                {entry.rating ? <div className="entry-rating">{renderStars(entry.rating)}</div> : null}
+                <div className="timeline-entries">
+                  {dayEntries.map((entry) => (
+                    <div key={entry.id} className="timeline-entry">
+                      <div className="entry-type-indicator">
+                        {entry.rating || entry.notes ? (
+                          <span className="detailed-icon">🪶</span>
+                        ) : (
+                          <span className="quick-log-icon">✓</span>
+                        )}
+                      </div>
 
-                {entry.notes ? <p className="entry-notes">{entry.notes}</p> : null}
+                      <div className="entry-content">
+                        <div className="entry-header">
+                          <h4
+                            onClick={() => navigate(`/spell/${entry.spellId}`)}
+                            className="spell-link"
+                          >
+                            {entry.spellTitle}
+                          </h4>
+                          <button
+                            className="delete-btn"
+                            onClick={() => handleDelete(entry.id)}
+                            aria-label="Delete entry"
+                            type="button"
+                          >
+                            <HiOutlineTrash />
+                          </button>
+                        </div>
 
-                {entry.tags && entry.tags.length > 0 ? (
-                  <div className="entry-tags">
-                    {entry.tags.map((tag, index) => (
-                      <span key={index} className="tag">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                ) : null}
+                        {entry.rating && <div className="entry-rating">{renderStars(entry.rating)}</div>}
+
+                        {entry.notes && <p className="entry-notes">{entry.notes}</p>}
+
+                        {entry.tags && entry.tags.length > 0 && (
+                          <div className="entry-tags">
+                            {entry.tags.map((tag, i) => (
+                              <span key={i} className="tag">
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        {!entry.rating && !entry.notes && (
+                          <p className="quick-log-message">Logged as performed ✨</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             ))}
+          </div>
+
+          <div className="timeline-stats">
+            <div className="stat-card">
+              <span className="stat-number">{entries.length}</span>
+              <span className="stat-label">spells logged</span>
+            </div>
+            <div className="stat-card">
+              <span className="stat-number">
+                {entries.filter((e) => e.notes && e.notes.trim() !== "").length}
+              </span>
+              <span className="stat-label">with reflections</span>
+            </div>
+            <div className="stat-card">
+              <span className="stat-number">{new Set(entries.map((e) => e.spellId)).size}</span>
+              <span className="stat-label">unique spells</span>
+            </div>
           </div>
         </>
       )}

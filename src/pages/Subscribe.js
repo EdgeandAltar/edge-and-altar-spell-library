@@ -6,6 +6,7 @@ import {
   HiOutlineCheckCircle,
   HiOutlineArrowPath,
   HiOutlineSparkles,
+  HiOutlinePencilSquare,
 } from "react-icons/hi2";
 
 import { supabase } from "../supabaseClient";
@@ -136,6 +137,9 @@ function Subscribe() {
                 <span className="check">✓</span> Printable spell cards
               </li>
               <li>
+                <span className="check">✓</span> Unlimited custom spells
+              </li>
+              <li>
                 <span className="check">✓</span> Mobile-optimized access
               </li>
               <li>
@@ -189,6 +193,14 @@ function Subscribe() {
             </div>
             <h4>No Gatekeeping</h4>
             <p>Clear instructions. Real psychology. Magic for real people.</p>
+          </div>
+
+          <div className="benefit">
+            <div className="benefit-icon">
+              <HiOutlinePencilSquare />
+            </div>
+            <h4>Unlimited Custom Spells</h4>
+            <p>Create and save your own personalized rituals and ceremonies</p>
           </div>
         </div>
       </section>

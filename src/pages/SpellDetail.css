@@ -99,11 +99,43 @@
   border-color: #7D5E4F;
 }
 
-/* Journal Button */
+/* Journal Actions Container */
+.journal-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Quick Log Button (Blue) */
+.quick-log-btn-detail {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #6a9fb5 0%, #5a8fa5 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(106, 159, 181, 0.3);
+}
+
+.quick-log-btn-detail:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(106, 159, 181, 0.4);
+  background: linear-gradient(135deg, #5a8fa5 0%, #4a7f95 100%);
+}
+
+/* Journal Button (Brown Outline) */
 .journal-btn-detail {
   padding: 12px 24px;
   background: white;
-  border: 2px solid #9D7B6B;
+  border: 2px solid #7D5E4F;
   border-radius: 8px;
   color: #7D5E4F;
   font-size: 15px;
@@ -371,6 +403,26 @@
   border-color: #9D7B6B;
 }
 
+/* Date Picker in Modal */
+.modal-section .date-picker {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e8e4db;
+  border-radius: 8px;
+  font-size: 15px;
+  font-family: 'Inter', sans-serif;
+  color: #333;
+  background: white;
+  cursor: pointer;
+  transition: border-color 0.3s;
+}
+
+.modal-section .date-picker:focus {
+  outline: none;
+  border-color: #7D5E4F;
+  box-shadow: 0 0 0 3px rgba(125, 94, 79, 0.1);
+}
+
 /* Tag Suggestions */
 .tag-suggestions {
   display: flex;
@@ -555,7 +607,12 @@
     justify-content: flex-start;
   }
 
+  .journal-actions {
+    width: 100%;
+  }
+
   .download-btn-detail,
+  .quick-log-btn-detail,
   .journal-btn-detail {
     flex: 1;
     justify-content: center;
