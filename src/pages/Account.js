@@ -8,6 +8,8 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 function Account() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelledAt, setCancelledAt] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -38,7 +40,7 @@ function Account() {
     const fetchProfileDirect = async (token, userId) => {
       try {
         const response = await fetch(
-          `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=id,email,access_level,is_admin,created_at`,
+          `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=id,email,access_level,is_admin,created_at,subscription_type,stripe_subscription_id`,
           {
             headers: {
               "apikey": SUPABASE_ANON_KEY,
@@ -85,6 +87,8 @@ function Account() {
             accessLevel: data?.access_level || "free",
             isAdmin: data?.is_admin || false,
             createdAt: data?.created_at || user.created_at,
+            subscriptionType: data?.subscription_type || null,
+            stripeSubscriptionId: data?.stripe_subscription_id || null,
           });
         }
       } catch (err) {
@@ -109,6 +113,57 @@ function Account() {
       day: "numeric",
       year: "numeric",
     });
+  };
+
+  const handleCancelSubscription = async () => {
+    const confirmed = window.confirm(
+      "Are you sure you want to cancel your subscription? You'll keep premium access until the end of your current billing period."
+    );
+    if (!confirmed) return;
+
+    setCancelling(true);
+    try {
+      const session = (() => {
+        const storageKey = Object.keys(localStorage).find(
+          (k) => k.includes("sb-") && k.includes("-auth-token")
+        );
+        if (!storageKey) return null;
+        const raw = localStorage.getItem(storageKey);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        return parsed?.access_token;
+      })();
+
+      if (!session) {
+        alert("Please log in again to cancel your subscription.");
+        return;
+      }
+
+      const response = await fetch(
+        `${SUPABASE_URL}/functions/v1/cancel-subscription`,
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${session}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.error || "Failed to cancel subscription. Please try again.");
+        return;
+      }
+
+      setCancelledAt(data.cancel_at);
+    } catch (err) {
+      console.error("[Account] cancel error:", err);
+      alert("Something went wrong. Please try again.");
+    } finally {
+      setCancelling(false);
+    }
   };
 
   if (loading) {
@@ -164,9 +219,31 @@ function Account() {
           </div>
         )}
 
-        {profile.accessLevel === "premium" && (
+        {profile.accessLevel === "premium" && profile.subscriptionType === "monthly" && (
           <div className="premium-section">
-            <p>🎉 You have lifetime access to all spells!</p>
+            {cancelledAt ? (
+              <div className="cancel-info">
+                <p>Your subscription has been cancelled.</p>
+                <p>You'll keep premium access until <strong>{formatDate(cancelledAt)}</strong>.</p>
+              </div>
+            ) : (
+              <>
+                <p>You have an active monthly subscription.</p>
+                <button
+                  onClick={handleCancelSubscription}
+                  className="cancel-btn"
+                  disabled={cancelling}
+                >
+                  {cancelling ? "Cancelling..." : "Cancel Subscription"}
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
+        {profile.accessLevel === "premium" && profile.subscriptionType !== "monthly" && (
+          <div className="premium-section">
+            <p>You have lifetime access to all spells!</p>
           </div>
         )}
       </div>
