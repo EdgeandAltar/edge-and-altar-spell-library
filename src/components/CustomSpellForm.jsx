@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import { createCustomSpell, updateCustomSpell } from "../services/customSpellsService";
+import { TAG_GROUPS } from "../constants/tags";
 import "../pages/Admin.css"; // reuse admin styles
 
 // Slug helper (same behavior as EditSpell)
@@ -423,108 +424,13 @@ function CustomSpellForm({ mode = "create" }) {
         <div className="form-group">
           <label>Tags (select all that apply)</label>
           <div style={{ marginBottom: "16px" }}>
-            {/* Intent Tags */}
-            <div style={{ marginBottom: "12px" }}>
-              <h4 style={{ fontSize: "14px", color: "#7D5E4F", marginBottom: "8px", fontWeight: "600" }}>
-                Intent
-              </h4>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", padding: "12px", background: "#f5f3ef", borderRadius: "8px" }}>
-                {[
-                  "Anxiety Relief",
-                  "Boundary Setting",
-                  "Emotional Cleansing",
-                  "Energy Protection",
-                  "Stress Release",
-                  "Confidence Building",
-                  "Letting Go",
-                  "Self-Permission",
-                  "Guilt Release",
-                  "Overwhelm Relief",
-                ].map((tag) => (
-                  <label
-                    key={tag}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px",
-                      padding: "6px 12px",
-                      background: (formData.tags || []).includes(tag) ? "#7D5E4F" : "white",
-                      color: (formData.tags || []).includes(tag) ? "white" : "#7D5E4F",
-                      borderRadius: "6px",
-                      cursor: "pointer",
-                      fontSize: "13px",
-                      fontWeight: "500",
-                      transition: "all 0.2s",
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      value={tag}
-                      checked={(formData.tags || []).includes(tag)}
-                      onChange={() => toggleTag(tag)}
-                      style={{ margin: 0 }}
-                    />
-                    {tag}
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {/* Situation Tags */}
-            <div style={{ marginBottom: "12px" }}>
-              <h4 style={{ fontSize: "14px", color: "#7D5E4F", marginBottom: "8px", fontWeight: "600" }}>
-                Situation
-              </h4>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", padding: "12px", background: "#f5f3ef", borderRadius: "8px" }}>
-                {[
-                  "After Difficult Conversation",
-                  "Before Bed",
-                  "After Work",
-                  "End of Day",
-                  "Morning Ritual",
-                  "Before Interaction",
-                  "Emergency Use",
-                  "Daily Practice",
-                  "When Stuck",
-                  "When Overwhelmed",
-                ].map((tag) => (
-                  <label
-                    key={tag}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px",
-                      padding: "6px 12px",
-                      background: (formData.tags || []).includes(tag) ? "#7D5E4F" : "white",
-                      color: (formData.tags || []).includes(tag) ? "white" : "#7D5E4F",
-                      borderRadius: "6px",
-                      cursor: "pointer",
-                      fontSize: "13px",
-                      fontWeight: "500",
-                      transition: "all 0.2s",
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      value={tag}
-                      checked={(formData.tags || []).includes(tag)}
-                      onChange={() => toggleTag(tag)}
-                      style={{ margin: 0 }}
-                    />
-                    {tag}
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {/* Supply Tags */}
-            <div style={{ marginBottom: "12px" }}>
-              <h4 style={{ fontSize: "14px", color: "#7D5E4F", marginBottom: "8px", fontWeight: "600" }}>
-                Supplies
-              </h4>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", padding: "12px", background: "#f5f3ef", borderRadius: "8px" }}>
-                {["No Supplies Needed", "Kitchen Items Only", "Candles Required", "Bath/Water Access", "Paper & Pen", "Household Items"].map(
-                  (tag) => (
+            {Object.entries(TAG_GROUPS).map(([groupName, tags]) => (
+              <div key={groupName} style={{ marginBottom: "12px" }}>
+                <h4 style={{ fontSize: "14px", color: "#7D5E4F", marginBottom: "8px", fontWeight: "600" }}>
+                  {groupName === "Intent" ? "Emotional / Intentional" : groupName === "Situation" ? "When to Use" : groupName}
+                </h4>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", padding: "12px", background: "#f5f3ef", borderRadius: "8px" }}>
+                  {tags.map((tag) => (
                     <label
                       key={tag}
                       style={{
@@ -550,10 +456,10 @@ function CustomSpellForm({ mode = "create" }) {
                       />
                       {tag}
                     </label>
-                  )
-                )}
+                  ))}
+                </div>
               </div>
-            </div>
+            ))}
           </div>
         </div>
 

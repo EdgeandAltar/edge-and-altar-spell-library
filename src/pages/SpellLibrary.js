@@ -1,9 +1,11 @@
 import LoadingSpinner from "../components/LoadingSpinner";
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { HiOutlineHeart, HiHeart, HiLockClosed } from "react-icons/hi";
+import { HiOutlineHeart, HiHeart, HiLockClosed, HiOutlineFolder } from "react-icons/hi";
 import "./SpellLibrary.css";
 import MoonPhaseWidget from "../components/MoonPhaseWidget";
+import AddToCollectionModal from "../components/AddToCollectionModal";
+import { TAG_GROUPS } from "../constants/tags";
 
 const SUPABASE_URL = "https://wmsekzsocvmfudmjakhu.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indtc2VrenNvY3ZtZnVkbWpha2h1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0OTU1MDMsImV4cCI6MjA4NDA3MTUwM30.1xx9jyZdByOKNphMFHJ6CVOYRgv2fiH8fw-Gj2p4rlQ";
@@ -20,12 +22,14 @@ function SpellLibrary() {
   const [selectedSkill, setSelectedSkill] = useState("");
   const [selectedSeason, setSelectedSeason] = useState("");
   const [selectedTag, setSelectedTag] = useState("");
+  const [selectedAccess, setSelectedAccess] = useState("");
   const [showCustomOnly, setShowCustomOnly] = useState(false);
 
   const [userSubscription, setUserSubscription] = useState("free");
   const [favorites, setFavorites] = useState([]);
   const [accessToken, setAccessToken] = useState(null);
   const [userId, setUserId] = useState(null);
+  const [collectionSpellId, setCollectionSpellId] = useState(null);
 
   const navigate = useNavigate();
 
@@ -80,37 +84,8 @@ function SpellLibrary() {
     "Dark Moon",
   ];
 
-  const tagOptions = [
-    "Anxiety Relief",
-    "Boundary Setting",
-    "Emotional Cleansing",
-    "Energy Protection",
-    "Stress Release",
-    "Confidence Building",
-    "Letting Go",
-    "Self-Permission",
-    "Guilt Release",
-    "Overwhelm Relief",
-    "After Difficult Conversation",
-    "Before Bed",
-    "After Work",
-    "End of Day",
-    "Morning Ritual",
-    "Before Interaction",
-    "Emergency Use",
-    "Daily Practice",
-    "When Stuck",
-    "When Overwhelmed",
-    "No Supplies Needed",
-    "Kitchen Items Only",
-    "Candles Required",
-    "Bath/Water Access",
-    "Paper & Pen",
-    "Household Items",
-  ];
-
   const isDefaultView = () =>
-    !searchTerm && !selectedCategory && !selectedTime && !selectedSkill && !selectedSeason && !selectedTag && !showCustomOnly;
+    !searchTerm && !selectedCategory && !selectedTime && !selectedSkill && !selectedSeason && !selectedTag && !selectedAccess && !showCustomOnly;
 
   const sortWithFeaturedFirst = (spellsList) => {
     // Don't apply featured sorting if any filter is active (including custom-only)
@@ -132,6 +107,7 @@ function SpellLibrary() {
     setSelectedSkill("");
     setSelectedSeason("");
     setSelectedTag("");
+    setSelectedAccess("");
     setShowCustomOnly(false);
   };
 
@@ -410,6 +386,12 @@ function SpellLibrary() {
       filtered = filtered.filter((spell) => (spell.tags || []).includes(selectedTag));
     }
 
+    if (selectedAccess === "free") {
+      filtered = filtered.filter((spell) => !spell.isPremium);
+    } else if (selectedAccess === "premium") {
+      filtered = filtered.filter((spell) => spell.isPremium);
+    }
+
     // Filter for custom spells only if toggle is active
     if (showCustomOnly) {
       filtered = filtered.filter((spell) => spell.isCustom);
@@ -427,6 +409,7 @@ function SpellLibrary() {
     selectedSkill,
     selectedSeason,
     selectedTag,
+    selectedAccess,
     showCustomOnly,
     userSubscription,
   ]);
@@ -447,7 +430,11 @@ function SpellLibrary() {
 
         <div className="library-header">
           <h1>Spell Library</h1>
-          <p className="subtitle">Browse and discover {filteredSpells.length} spells</p>
+          <p className="subtitle">
+            Browse and discover {filteredSpells.length}{" "}
+            {selectedAccess === "free" ? "free " : selectedAccess === "premium" ? "premium " : ""}
+            spell{filteredSpells.length !== 1 ? "s" : ""}
+          </p>
 
           {userSubscription === "free" && (
             <p style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: "14px", marginTop: "8px" }}>
@@ -484,6 +471,12 @@ function SpellLibrary() {
         />
 
         <div className="filter-row">
+          <select value={selectedAccess} onChange={(e) => setSelectedAccess(e.target.value)}>
+            <option value="">All Spells</option>
+            <option value="free">Free Only</option>
+            <option value="premium">Premium Only</option>
+          </select>
+
           <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}>
             <option value="">All Categories</option>
             {categories.map((cat) => (
@@ -493,20 +486,20 @@ function SpellLibrary() {
             ))}
           </select>
 
-          <select value={selectedTime} onChange={(e) => setSelectedTime(e.target.value)}>
-            <option value="">Any Time</option>
-            {timeOptions.map((time) => (
-              <option key={time} value={time}>
-                {time}
-              </option>
-            ))}
-          </select>
-
           <select value={selectedSkill} onChange={(e) => setSelectedSkill(e.target.value)}>
             <option value="">All Levels</option>
             {skillLevels.map((level) => (
               <option key={level} value={level}>
                 {level}
+              </option>
+            ))}
+          </select>
+
+          <select value={selectedTime} onChange={(e) => setSelectedTime(e.target.value)}>
+            <option value="">Any Time</option>
+            {timeOptions.map((time) => (
+              <option key={time} value={time}>
+                {time}
               </option>
             ))}
           </select>
@@ -522,11 +515,27 @@ function SpellLibrary() {
 
           <select value={selectedTag} onChange={(e) => setSelectedTag(e.target.value)}>
             <option value="">All Tags</option>
-            {tagOptions.map((tag) => (
-              <option key={tag} value={tag}>
-                {tag}
-              </option>
-            ))}
+            <optgroup label="Emotional / Intentional">
+              {TAG_GROUPS.Intent.map((tag) => (
+                <option key={tag} value={tag}>
+                  {tag}
+                </option>
+              ))}
+            </optgroup>
+            <optgroup label="When to Use">
+              {TAG_GROUPS.Situation.map((tag) => (
+                <option key={tag} value={tag}>
+                  {tag}
+                </option>
+              ))}
+            </optgroup>
+            <optgroup label="Supplies">
+              {TAG_GROUPS.Supplies.map((tag) => (
+                <option key={tag} value={tag}>
+                  {tag}
+                </option>
+              ))}
+            </optgroup>
           </select>
 
           <button
@@ -548,7 +557,7 @@ function SpellLibrary() {
             {showCustomOnly ? "Showing Custom Spells" : "Show My Custom Spells"}
           </button>
 
-          {(searchTerm || selectedCategory || selectedTime || selectedSkill || selectedSeason || selectedTag || showCustomOnly) && (
+          {(searchTerm || selectedCategory || selectedTime || selectedSkill || selectedSeason || selectedTag || selectedAccess || showCustomOnly) && (
             <button className="clear-filters" onClick={clearFilters} type="button">
               Clear Filters
             </button>
@@ -597,6 +606,19 @@ function SpellLibrary() {
                   )}
                 </button>
 
+                <button
+                  className="collection-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCollectionSpellId(spell.id);
+                  }}
+                  aria-label="Add to collection"
+                  title="Add to Collection"
+                  type="button"
+                >
+                  <HiOutlineFolder />
+                </button>
+
                 {spell.imageUrl && (
                   <img
                     src={spell.imageUrl}
@@ -637,6 +659,14 @@ function SpellLibrary() {
             );
           })}
         </div>
+      )}
+
+      {collectionSpellId && userId && (
+        <AddToCollectionModal
+          spellId={collectionSpellId}
+          userId={userId}
+          onClose={() => setCollectionSpellId(null)}
+        />
       )}
     </div>
   );

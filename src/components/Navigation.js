@@ -174,6 +174,17 @@ function Navigation({ user, isAdmin, adminLoading }) {
                   <button
                     className="dropdown-item"
                     onClick={() => {
+                      navigate("/collections");
+                      setShowDropdown(false);
+                    }}
+                    type="button"
+                  >
+                    My Collections
+                  </button>
+
+                  <button
+                    className="dropdown-item"
+                    onClick={() => {
                       navigate("/journal");
                       setShowDropdown(false);
                     }}

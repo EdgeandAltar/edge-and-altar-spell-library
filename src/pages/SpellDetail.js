@@ -12,7 +12,9 @@ import {
   HiOutlineDownload,
   HiOutlinePencilAlt,
   HiOutlineBookOpen,
+  HiOutlineFolder,
 } from "react-icons/hi";
+import AddToCollectionModal from "../components/AddToCollectionModal";
 import "./SpellDetail.css";
 
 const SUPABASE_URL = "https://wmsekzsocvmfudmjakhu.supabase.co";
@@ -39,6 +41,7 @@ function SpellDetail() {
   const [journalEntries, setJournalEntries] = useState([]);
 
   const [relatedSpells, setRelatedSpells] = useState([]);
+  const [showCollectionModal, setShowCollectionModal] = useState(false);
 
   // Get session from localStorage
   const getSessionFromStorage = () => {
@@ -461,85 +464,10 @@ function SpellDetail() {
           <div className="spell-title-row">
             <h1>{spell.title}</h1>
 
-            <button className="download-btn-detail" onClick={handleDownloadPDF} type="button">
-              <HiOutlineDownload /> Download PDF
-            </button>
-
-            <div className="header-actions">
-              {/* Edit button for user's custom spells */}
-              {spell.isCustom && spell.createdByUserId === userId && (
-                <button
-                  className="edit-custom-btn"
-                  onClick={() => navigate(`/custom-spells/edit/${spell.id}`)}
-                  type="button"
-                  style={{
-                    padding: "10px 18px",
-                    background: "#6a9fb5",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "8px",
-                    cursor: "pointer",
-                    fontSize: "14px",
-                    fontWeight: "600",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                  }}
-                >
-                  <HiOutlinePencilAlt /> Edit Custom Spell
-                </button>
-              )}
-
-              {/* Use as Template button for library spells */}
-              {!spell.isCustom && (
-                <button
-                  className="template-btn"
-                  onClick={() => navigate("/custom-spells/new", { state: { template: spell } })}
-                  type="button"
-                  style={{
-                    padding: "10px 18px",
-                    background: "#7D5E4F",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "8px",
-                    cursor: "pointer",
-                    fontSize: "14px",
-                    fontWeight: "600",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                  }}
-                >
-                  <HiOutlinePencilAlt /> Create Custom Version
-                </button>
-              )}
-
-              <div className="journal-actions">
-                <button
-                  className="quick-log-btn-detail"
-                  onClick={handleQuickLog}
-                  type="button"
-                >
-                  ✓ I did this spell
-                </button>
-
-                <button
-                  className="journal-btn-detail"
-                  onClick={() => setShowEnhancedJournal(true)}
-                  type="button"
-                >
-                  <HiOutlinePencilAlt /> Full Journal Entry
-                </button>
-
-                <button
-                  className="history-btn-detail"
-                  onClick={() => setShowSpellHistory(true)}
-                  type="button"
-                  title="View spell history"
-                >
-                  <HiOutlineBookOpen /> History
-                </button>
-              </div>
+            <div className="title-row-actions">
+              <button className="download-btn-detail" onClick={handleDownloadPDF} type="button">
+                <HiOutlineDownload /> Download PDF
+              </button>
 
               <button
                 className="favorite-btn-detail"
@@ -552,6 +480,93 @@ function SpellDetail() {
                 ) : (
                   <HiOutlineHeart className="heart-icon-detail" />
                 )}
+              </button>
+
+              <button
+                className="collection-btn-detail"
+                onClick={() => setShowCollectionModal(true)}
+                aria-label="Add to collection"
+                title="Add to Collection"
+                type="button"
+              >
+                <HiOutlineFolder />
+              </button>
+            </div>
+          </div>
+
+          <div className="header-actions">
+            {/* Edit button for user's custom spells */}
+            {spell.isCustom && spell.createdByUserId === userId && (
+              <button
+                className="edit-custom-btn"
+                onClick={() => navigate(`/custom-spells/edit/${spell.id}`)}
+                type="button"
+                style={{
+                  padding: "10px 18px",
+                  background: "#6a9fb5",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
+              >
+                <HiOutlinePencilAlt /> Edit Custom Spell
+              </button>
+            )}
+
+            {/* Use as Template button for library spells */}
+            {!spell.isCustom && (
+              <button
+                className="template-btn"
+                onClick={() => navigate("/custom-spells/new", { state: { template: spell } })}
+                type="button"
+                style={{
+                  padding: "10px 18px",
+                  background: "#7D5E4F",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
+              >
+                <HiOutlinePencilAlt /> Create Custom Version
+              </button>
+            )}
+
+            <div className="journal-actions">
+              <button
+                className="quick-log-btn-detail"
+                onClick={handleQuickLog}
+                type="button"
+              >
+                ✓ I did this spell
+              </button>
+
+              <button
+                className="journal-btn-detail"
+                onClick={() => setShowEnhancedJournal(true)}
+                type="button"
+              >
+                <HiOutlinePencilAlt /> Full Journal Entry
+              </button>
+
+              <button
+                className="history-btn-detail"
+                onClick={() => setShowSpellHistory(true)}
+                type="button"
+                title="View spell history"
+              >
+                <HiOutlineBookOpen /> History
               </button>
             </div>
           </div>
@@ -643,6 +658,14 @@ function SpellDetail() {
             ))}
           </div>
         </div>
+      )}
+
+      {showCollectionModal && userId && (
+        <AddToCollectionModal
+          spellId={spell.id}
+          userId={userId}
+          onClose={() => setShowCollectionModal(false)}
+        />
       )}
 
       {showEnhancedJournal && (

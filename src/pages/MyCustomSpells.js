@@ -3,7 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import { getUserCustomSpells, deleteCustomSpell, canCreateCustomSpell } from "../services/customSpellsService";
 import LoadingSpinner from "../components/LoadingSpinner";
-import "./SpellLibrary.css"; // Reuse spell library styles
+import { HiOutlinePencilAlt, HiOutlineBookOpen, HiOutlineLockClosed } from "react-icons/hi";
+import "./SpellLibrary.css";
+import "./MyCustomSpells.css";
 
 function MyCustomSpells() {
   const [customSpells, setCustomSpells] = useState([]);
@@ -11,7 +13,7 @@ function MyCustomSpells() {
   const [error, setError] = useState("");
   const [userId, setUserId] = useState(null);
   const [canCreate, setCanCreate] = useState({ allowed: false, limit: 0, current: 0 });
-  const [deleteConfirm, setDeleteConfirm] = useState(null); // ID of spell to delete
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -32,7 +34,6 @@ function MyCustomSpells() {
 
       setUserId(user.id);
 
-      // Fetch custom spells and check creation eligibility in parallel
       const [spells, createCheck] = await Promise.all([
         getUserCustomSpells(user.id),
         canCreateCustomSpell(user.id),
@@ -53,7 +54,6 @@ function MyCustomSpells() {
 
     try {
       await deleteCustomSpell(spellId, userId);
-      // Refresh the list
       await fetchCustomSpells();
       setDeleteConfirm(null);
     } catch (err) {
@@ -63,10 +63,7 @@ function MyCustomSpells() {
   };
 
   const handleCreateNew = () => {
-    if (!canCreate.allowed) {
-      // Show upgrade message (handled in UI)
-      return;
-    }
+    if (!canCreate.allowed) return;
     navigate("/custom-spells/new");
   };
 
@@ -74,250 +71,172 @@ function MyCustomSpells() {
     return <LoadingSpinner />;
   }
 
+  const spellCountText = canCreate.limit === Infinity
+    ? `${canCreate.current} custom spell${canCreate.current !== 1 ? "s" : ""} created`
+    : `${canCreate.current} of ${canCreate.limit} custom spells created`;
+
   return (
-    <div className="spell-library-container">
-      <div className="library-header">
-        <h1>My Custom Spells</h1>
-        <p className="library-subtitle">
-          {canCreate.limit === Infinity
-            ? `You have ${canCreate.current} custom spell${canCreate.current !== 1 ? "s" : ""}`
-            : `${canCreate.current} of ${canCreate.limit} custom spells created`}
-        </p>
-      </div>
-
-      {/* Privacy Info Box */}
-      <div
-        style={{
-          background: "#f5f3ef",
-          border: "1px solid #d4c5b9",
-          borderRadius: "8px",
-          padding: "16px 20px",
-          margin: "0 auto 30px",
-          maxWidth: "800px",
-          textAlign: "center",
-        }}
-      >
-        <p style={{ margin: 0, color: "#5a5a5a", fontSize: "14px", lineHeight: "1.5" }}>
-          <strong>Your spells are private.</strong> Custom spells you create are only visible to you.
-          They work seamlessly with your favorites and journal, just like library spells.
-        </p>
-      </div>
-
-      {error && <div className="error-message" style={{ margin: "20px auto", maxWidth: "800px" }}>{error}</div>}
-
-      {/* Create New Button */}
-      <div style={{ textAlign: "center", marginBottom: "30px" }}>
-        {canCreate.allowed ? (
-          <button
-            onClick={handleCreateNew}
-            style={{
-              padding: "12px 24px",
-              background: "#7D5E4F",
-              color: "white",
-              border: "none",
-              borderRadius: "8px",
-              cursor: "pointer",
-              fontSize: "16px",
-              fontWeight: "600",
-              transition: "background 0.2s",
-            }}
-            onMouseOver={(e) => (e.target.style.background = "#6a4f42")}
-            onMouseOut={(e) => (e.target.style.background = "#7D5E4F")}
-          >
-            + Create New Custom Spell
-          </button>
-        ) : (
-          <div
-            style={{
-              background: "#f5f3ef",
-              border: "2px solid #7D5E4F",
-              borderRadius: "12px",
-              padding: "20px",
-              maxWidth: "600px",
-              margin: "0 auto",
-            }}
-          >
-            <h3 style={{ color: "#7D5E4F", marginBottom: "10px" }}>Custom Spell Limit Reached</h3>
-            <p style={{ marginBottom: "15px", color: "#5a5a5a" }}>
-              You've created {canCreate.current} of {canCreate.limit} free custom spells.
-            </p>
-            <button
-              onClick={() => navigate("/subscribe")}
-              style={{
-                padding: "12px 24px",
-                background: "#7D5E4F",
-                color: "white",
-                border: "none",
-                borderRadius: "8px",
-                cursor: "pointer",
-                fontSize: "16px",
-                fontWeight: "600",
-              }}
-            >
-              Upgrade to Premium for Unlimited Custom Spells
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Spells Grid */}
-      {customSpells.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "40px", color: "#888" }}>
-          <p style={{ fontSize: "18px", marginBottom: "10px" }}>You haven't created any custom spells yet.</p>
-          <p>Click the button above to create your first custom spell!</p>
+    <div className="custom-spells-page">
+      {/* Hero Section */}
+      <div className="library-hero">
+        <div className="hero-image-container">
+          <img
+            src="/images/collections-hero.png"
+            alt="Custom spells workspace"
+            className="hero-image"
+          />
+          <div className="hero-overlay"></div>
         </div>
-      ) : (
-        <div className="spell-grid" style={{ padding: "20px" }}>
-          {customSpells.map((spell) => (
-            <div key={spell.id} className="spell-card" style={{ position: "relative" }}>
-              {spell.image_url && (
-                <img
-                  src={spell.image_url}
-                  alt={spell.title}
-                  className="spell-image"
-                  style={{ width: "100%", height: "200px", objectFit: "cover", borderRadius: "8px 8px 0 0" }}
-                />
-              )}
-              <div style={{ padding: "15px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                  <span
-                    style={{
+
+        <div className="library-header">
+          <h1>Your Personal Grimoire</h1>
+          <p className="subtitle">Create spells that fit your actual life</p>
+          <p className="subtitle" style={{ fontSize: "14px", marginTop: "8px", opacity: 0.85 }}>
+            {spellCountText}
+          </p>
+        </div>
+      </div>
+
+      {error && (
+        <div className="mcs-error">{error}</div>
+      )}
+
+      {/* Spells Grid (when user has spells) */}
+      {customSpells.length > 0 ? (
+        <div className="mcs-content">
+          <div className="mcs-top-bar">
+            {canCreate.allowed ? (
+              <button className="mcs-create-btn" onClick={handleCreateNew} type="button">
+                + Create New Spell
+              </button>
+            ) : (
+              <button className="mcs-upgrade-btn" onClick={() => navigate("/subscribe")} type="button">
+                Upgrade for Unlimited Spells
+              </button>
+            )}
+          </div>
+
+          <div className="spell-grid">
+            {customSpells.map((spell) => (
+              <div key={spell.id} className="spell-card" style={{ position: "relative" }}>
+                {spell.image_url && (
+                  <img
+                    src={spell.image_url}
+                    alt={spell.title}
+                    className="spell-image"
+                  />
+                )}
+                <div className="spell-content">
+                  <div className="spell-badges">
+                    <span className="custom-badge" style={{
                       background: "#7D5E4F",
                       color: "white",
                       padding: "4px 10px",
                       borderRadius: "4px",
                       fontSize: "12px",
-                      fontWeight: "600",
-                    }}
-                  >
-                    Custom
-                  </span>
-                  <span className="spell-category" style={{ fontSize: "13px" }}>
-                    {spell.category}
-                  </span>
-                </div>
-                <h3 className="spell-title" style={{ fontSize: "18px", marginBottom: "15px", fontWeight: "600" }}>
-                  {spell.title}
-                </h3>
+                      fontWeight: "600"
+                    }}>Custom</span>
+                    {spell.category && <span className="category">{spell.category}</span>}
+                  </div>
+                  <h3>{spell.title}</h3>
 
-                {/* Action Buttons */}
-                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                  <button
-                    onClick={() => navigate(`/spell/${spell.id}`)}
-                    style={{
-                      flex: "1",
-                      padding: "8px 12px",
-                      background: "#7D5E4F",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "6px",
-                      cursor: "pointer",
-                      fontSize: "14px",
-                      fontWeight: "500",
-                    }}
-                  >
-                    View
-                  </button>
-                  <button
-                    onClick={() => navigate(`/custom-spells/edit/${spell.id}`)}
-                    style={{
-                      flex: "1",
-                      padding: "8px 12px",
-                      background: "#6a9fb5",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "6px",
-                      cursor: "pointer",
-                      fontSize: "14px",
-                      fontWeight: "500",
-                    }}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => setDeleteConfirm(spell.id)}
-                    style={{
-                      flex: "1",
-                      padding: "8px 12px",
-                      background: "#c74545",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "6px",
-                      cursor: "pointer",
-                      fontSize: "14px",
-                      fontWeight: "500",
-                    }}
-                  >
-                    Delete
-                  </button>
+                  <div className="mcs-card-actions">
+                    <button
+                      className="mcs-action-view"
+                      onClick={() => navigate(`/spell/${spell.id}`)}
+                      type="button"
+                    >
+                      View
+                    </button>
+                    <button
+                      className="mcs-action-edit"
+                      onClick={() => navigate(`/custom-spells/edit/${spell.id}`)}
+                      type="button"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="mcs-action-delete"
+                      onClick={() => setDeleteConfirm(spell.id)}
+                      type="button"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
               </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        /* Empty State */
+        <div className="mcs-content">
+          {/* Feature Cards */}
+          <div className="mcs-features">
+            <div className="mcs-feature-card">
+              <div className="mcs-feature-icon"><HiOutlinePencilAlt /></div>
+              <h3>Start from Scratch</h3>
+              <p>
+                Build a spell from the ground up using our guided template.
+                Add your own ingredients, words, and rituals.
+              </p>
             </div>
-          ))}
+
+            <div className="mcs-feature-card">
+              <div className="mcs-feature-icon"><HiOutlineBookOpen /></div>
+              <h3>Modify Library Spells</h3>
+              <p>
+                Copy any spell from the library and make it yours. Swap ingredients,
+                change the timing, rewrite the words to match your voice.
+              </p>
+            </div>
+
+            <div className="mcs-feature-card">
+              <div className="mcs-feature-icon"><HiOutlineLockClosed /></div>
+              <h3>Private & Integrated</h3>
+              <p>
+                Your custom spells work seamlessly with favorites, journal, and tracking.
+                They're private — only you can see them.
+              </p>
+            </div>
+          </div>
+
+          {/* Empty state message */}
+          <div className="mcs-empty-state">
+            <p className="mcs-empty-text">
+              You haven't created any custom spells yet. When you do, they'll appear here.
+            </p>
+
+            {canCreate.allowed ? (
+              <button className="mcs-create-btn mcs-create-btn-lg" onClick={handleCreateNew} type="button">
+                + Create Your First Spell
+              </button>
+            ) : (
+              <div className="mcs-limit-box">
+                <h3>Custom Spell Limit Reached</h3>
+                <p>
+                  You've created {canCreate.current} of {canCreate.limit} free custom spells.
+                </p>
+                <button className="mcs-upgrade-btn" onClick={() => navigate("/subscribe")} type="button">
+                  Upgrade to Premium for Unlimited Custom Spells
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
       {/* Delete Confirmation Modal */}
       {deleteConfirm && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: "rgba(0, 0, 0, 0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 1000,
-          }}
-          onClick={() => setDeleteConfirm(null)}
-        >
-          <div
-            style={{
-              background: "white",
-              borderRadius: "12px",
-              padding: "30px",
-              maxWidth: "400px",
-              margin: "20px",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 style={{ marginBottom: "15px", color: "#7D5E4F" }}>Delete Custom Spell?</h3>
-            <p style={{ marginBottom: "20px", color: "#666" }}>
-              Are you sure you want to delete this custom spell? This action cannot be undone.
-            </p>
-            <div style={{ display: "flex", gap: "10px" }}>
-              <button
-                onClick={() => setDeleteConfirm(null)}
-                style={{
-                  flex: "1",
-                  padding: "10px",
-                  background: "#e0e0e0",
-                  border: "none",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                  fontSize: "14px",
-                  fontWeight: "500",
-                }}
-              >
+        <div className="mcs-modal-overlay" onClick={() => setDeleteConfirm(null)}>
+          <div className="mcs-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Delete Custom Spell?</h3>
+            <p>Are you sure you want to delete this custom spell? This action cannot be undone.</p>
+            <div className="mcs-modal-actions">
+              <button className="mcs-modal-cancel" onClick={() => setDeleteConfirm(null)} type="button">
                 Cancel
               </button>
-              <button
-                onClick={() => handleDelete(deleteConfirm)}
-                style={{
-                  flex: "1",
-                  padding: "10px",
-                  background: "#c74545",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                  fontSize: "14px",
-                  fontWeight: "500",
-                }}
-              >
+              <button className="mcs-modal-delete" onClick={() => handleDelete(deleteConfirm)} type="button">
                 Delete
               </button>
             </div>

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { supabase } from "../supabaseClient";
+import { TAG_GROUPS } from "../constants/tags";
 import "./Admin.css";
 
 // ✅ slug helper for SEO-friendly URLs
@@ -130,40 +131,6 @@ function Admin() {
     "Bath/water access",
   ];
 
-  const intentTags = [
-    "Anxiety Relief",
-    "Boundary Setting",
-    "Emotional Cleansing",
-    "Energy Protection",
-    "Stress Release",
-    "Confidence Building",
-    "Letting Go",
-    "Self-Permission",
-    "Guilt Release",
-    "Overwhelm Relief",
-  ];
-
-  const situationTags = [
-    "After Difficult Conversation",
-    "Before Bed",
-    "After Work",
-    "End of Day",
-    "Morning Ritual",
-    "Before Interaction",
-    "Emergency Use",
-    "Daily Practice",
-    "When Stuck",
-    "When Overwhelmed",
-  ];
-
-  const supplyTags = [
-    "No Supplies Needed",
-    "Kitchen Items Only",
-    "Candles Required",
-    "Bath/Water Access",
-    "Paper & Pen",
-    "Household Items",
-  ];
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -384,9 +351,9 @@ function Admin() {
         <div className="form-group">
           <label>Tags (select all that apply)</label>
           <div style={{ marginBottom: "16px" }}>
-            {renderTagSection("Intent", intentTags)}
-            {renderTagSection("Situation", situationTags)}
-            {renderTagSection("Supplies", supplyTags)}
+            {renderTagSection("Emotional / Intentional", TAG_GROUPS.Intent)}
+            {renderTagSection("When to Use", TAG_GROUPS.Situation)}
+            {renderTagSection("Supplies", TAG_GROUPS.Supplies)}
           </div>
         </div>
 

@@ -5,6 +5,7 @@ import { supabase } from "./supabaseClient";
 
 import Navigation from "./components/Navigation";
 import Footer from "./components/Footer";
+import ScrollToTop from "./components/ScrollToTop";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Home from "./pages/Home";
@@ -22,6 +23,8 @@ import Favorites from "./pages/Favorites";
 import Account from "./pages/Account";
 import MyCustomSpells from "./pages/MyCustomSpells";
 import CustomSpellForm from "./components/CustomSpellForm";
+import MyCollections from "./pages/MyCollections";
+import CollectionDetail from "./pages/CollectionDetail";
 
 import "./App.css";
 
@@ -166,6 +169,7 @@ function App() {
 
   return (
     <Router>
+      <ScrollToTop />
       <Navigation user={user} isAdmin={isAdmin} adminLoading={adminLoading} />
 
       <Routes>
@@ -238,6 +242,10 @@ function App() {
         <Route path="/custom-spells" element={user ? <MyCustomSpells /> : <Navigate to="/login" replace />} />
         <Route path="/custom-spells/new" element={user ? <CustomSpellForm mode="create" /> : <Navigate to="/login" replace />} />
         <Route path="/custom-spells/edit/:id" element={user ? <CustomSpellForm mode="edit" /> : <Navigate to="/login" replace />} />
+
+        {/* Collections Routes */}
+        <Route path="/collections" element={user ? <MyCollections /> : <Navigate to="/login" replace />} />
+        <Route path="/collections/:id" element={user ? <CollectionDetail /> : <Navigate to="/login" replace />} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>

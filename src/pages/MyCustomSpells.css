@@ -1,0 +1,300 @@
+/* MyCustomSpells Page Styles */
+
+.custom-spells-page {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Content area below hero */
+.mcs-content {
+  padding: 0 30px 60px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.mcs-error {
+  max-width: 800px;
+  margin: 20px auto;
+  padding: 12px 20px;
+  background: #fff5f5;
+  border: 1px solid #fdd;
+  border-radius: 8px;
+  color: #c74545;
+  text-align: center;
+}
+
+/* Top bar (when spells exist) */
+.mcs-top-bar {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+/* Feature Cards */
+.mcs-features {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-bottom: 50px;
+}
+
+.mcs-feature-card {
+  background: white;
+  border: 1px solid #e8dcc8;
+  border-radius: 14px;
+  padding: 32px 24px;
+  text-align: center;
+  transition: all 0.25s;
+}
+
+.mcs-feature-card:hover {
+  box-shadow: 0 6px 24px rgba(125, 94, 79, 0.12);
+  transform: translateY(-3px);
+}
+
+.mcs-feature-icon {
+  font-size: 36px;
+  margin-bottom: 16px;
+  line-height: 1;
+  color: #7D5E4F;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mcs-feature-card h3 {
+  color: #7D5E4F;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.mcs-feature-card p {
+  color: #666;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Empty State */
+.mcs-empty-state {
+  text-align: center;
+  max-width: 550px;
+  margin: 0 auto;
+}
+
+.mcs-empty-text {
+  color: #888;
+  font-size: 17px;
+  line-height: 1.6;
+  margin-bottom: 28px;
+}
+
+/* Buttons */
+.mcs-create-btn {
+  padding: 12px 28px;
+  background: #7D5E4F;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.mcs-create-btn:hover {
+  background: #6a4f42;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(125, 94, 79, 0.3);
+}
+
+.mcs-create-btn-lg {
+  padding: 16px 36px;
+  font-size: 17px;
+}
+
+.mcs-upgrade-btn {
+  padding: 12px 28px;
+  background: #7D5E4F;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.mcs-upgrade-btn:hover {
+  background: #6a4f42;
+}
+
+/* Limit Reached Box */
+.mcs-limit-box {
+  background: #f5f3ef;
+  border: 2px solid #e8dcc8;
+  border-radius: 14px;
+  padding: 28px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.mcs-limit-box h3 {
+  color: #7D5E4F;
+  margin-bottom: 10px;
+  font-size: 18px;
+}
+
+.mcs-limit-box p {
+  color: #666;
+  margin-bottom: 18px;
+}
+
+/* Spell Card Actions */
+.mcs-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.mcs-action-view,
+.mcs-action-edit,
+.mcs-action-delete {
+  flex: 1;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.mcs-action-view {
+  background: #7D5E4F;
+  color: white;
+}
+
+.mcs-action-view:hover {
+  background: #6a4f42;
+}
+
+.mcs-action-edit {
+  background: #6a9fb5;
+  color: white;
+}
+
+.mcs-action-edit:hover {
+  background: #5a8fa5;
+}
+
+.mcs-action-delete {
+  background: #f5f0f0;
+  color: #c74545;
+}
+
+.mcs-action-delete:hover {
+  background: #c74545;
+  color: white;
+}
+
+/* Delete Modal */
+.mcs-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.mcs-modal {
+  background: white;
+  border-radius: 16px;
+  padding: 30px;
+  max-width: 400px;
+  width: 90%;
+  animation: mcsModalIn 0.3s ease-out;
+}
+
+@keyframes mcsModalIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.mcs-modal h3 {
+  color: #7D5E4F;
+  margin-bottom: 12px;
+  font-size: 20px;
+}
+
+.mcs-modal p {
+  color: #666;
+  margin-bottom: 22px;
+  line-height: 1.5;
+}
+
+.mcs-modal-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.mcs-modal-cancel {
+  flex: 1;
+  padding: 10px;
+  background: #e0e0e0;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.mcs-modal-cancel:hover {
+  background: #d0d0d0;
+}
+
+.mcs-modal-delete {
+  flex: 1;
+  padding: 10px;
+  background: #c74545;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.mcs-modal-delete:hover {
+  background: #a83333;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .mcs-content {
+    padding: 0 16px 40px;
+  }
+
+  .mcs-features {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 36px;
+  }
+
+  .mcs-feature-card {
+    padding: 24px 20px;
+  }
+}

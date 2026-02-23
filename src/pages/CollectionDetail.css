@@ -1,0 +1,161 @@
+.collection-detail-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 30px 20px;
+}
+
+.collection-detail-container .back-button {
+  background: none;
+  border: none;
+  color: #7D5E4F;
+  font-size: 15px;
+  cursor: pointer;
+  padding: 8px 0;
+  margin-bottom: 20px;
+  display: inline-block;
+  transition: opacity 0.2s;
+}
+
+.collection-detail-container .back-button:hover {
+  opacity: 0.7;
+}
+
+.collection-detail-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.editable-title {
+  color: #7D5E4F;
+  font-size: 32px;
+  cursor: pointer;
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.editable-title:hover {
+  background: #f5f3ef;
+}
+
+.spell-count-label {
+  color: #888;
+  font-size: 16px;
+  margin-top: 4px;
+}
+
+/* Inline Edit */
+.inline-edit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.inline-edit-input {
+  padding: 8px 14px;
+  border: 2px solid #7D5E4F;
+  border-radius: 8px;
+  font-size: 24px;
+  font-weight: 600;
+  color: #7D5E4F;
+  outline: none;
+  text-align: center;
+  min-width: 200px;
+}
+
+.inline-edit-save {
+  padding: 8px 18px;
+  background: #7D5E4F;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.inline-edit-save:hover {
+  background: #6a4f42;
+}
+
+.inline-edit-cancel {
+  padding: 8px 18px;
+  background: #e0e0e0;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.inline-edit-cancel:hover {
+  background: #d0d0d0;
+}
+
+/* Empty State */
+.empty-collection-detail {
+  text-align: center;
+  padding: 60px 20px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.empty-collection-detail .empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.empty-collection-detail h2 {
+  color: #7D5E4F;
+  margin-bottom: 12px;
+}
+
+.empty-collection-detail p {
+  color: #666;
+  margin-bottom: 24px;
+}
+
+.browse-spells-btn {
+  padding: 12px 24px;
+  background: #7D5E4F;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.browse-spells-btn:hover {
+  background: #6a4f42;
+}
+
+/* Remove Button on Spell Cards */
+.remove-from-collection-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  color: #c74545;
+  z-index: 5;
+  transition: all 0.2s;
+}
+
+.remove-from-collection-btn:hover {
+  background: #c74545;
+  color: white;
+  transform: scale(1.1);
+}

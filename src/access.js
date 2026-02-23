@@ -9,7 +9,7 @@ export async function getAccessLevel() {
     .from("profiles")
     .select("access_level")
     .eq("id", user.id)
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data?.access_level ?? "free";
