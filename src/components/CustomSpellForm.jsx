@@ -106,7 +106,7 @@ function CustomSpellForm({ mode = "create" }) {
     () => [
       "Any Time",
       "Imbolc (Feb 1-2)",
-      "Spring Equinox (March 20)",
+      "Ostara/Spring Equinox (March 20)",
       "Beltane (May 1)",
       "Summer Solstice (June 21)",
       "Lammas (Aug 1)",
