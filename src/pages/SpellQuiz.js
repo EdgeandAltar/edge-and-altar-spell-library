@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "../supabaseClient";
+import { getAccessLevel } from "../access";
 import "./SpellQuiz.css";
 
 const SUPABASE_URL = "https://wmsekzsocvmfudmjakhu.supabase.co";
@@ -17,57 +19,8 @@ function SpellQuiz() {
 
   const navigate = useNavigate();
 
-  // Get session from localStorage
-  const getSessionFromStorage = () => {
-    try {
-      const storageKey = Object.keys(localStorage).find(
-        (k) => k.includes("sb-") && k.includes("-auth-token")
-      );
-
-      if (!storageKey) return null;
-
-      const raw = localStorage.getItem(storageKey);
-      if (!raw) return null;
-
-      const parsed = JSON.parse(raw);
-      return {
-        accessToken: parsed?.access_token,
-        user: parsed?.user,
-      };
-    } catch (err) {
-      console.warn("[SpellQuiz] Failed to get session from storage:", err);
-      return null;
-    }
-  };
-
   useEffect(() => {
     let alive = true;
-
-    const fetchAccessLevel = async (token, userId) => {
-      try {
-        const response = await fetch(
-          `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=access_level`,
-          {
-            headers: {
-              "apikey": SUPABASE_ANON_KEY,
-              "Authorization": `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        if (!response.ok) {
-          console.warn("[SpellQuiz] profiles fetch failed:", response.status);
-          return "free";
-        }
-
-        const data = await response.json();
-        return data?.[0]?.access_level === "premium" ? "premium" : "free";
-      } catch (err) {
-        console.warn("[SpellQuiz] fetchAccessLevel error:", err);
-        return "free";
-      }
-    };
 
     // Fetch spells WITHOUT requiring auth - works for everyone
     const fetchSpellsPublic = async () => {
@@ -111,17 +64,21 @@ function SpellQuiz() {
         if (!alive) return;
         setAllSpells(spells);
 
-        // Then check if user is logged in for subscription status
-        const session = getSessionFromStorage();
+        // Check if user is logged in using the Supabase client
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!alive) return;
 
-        if (session?.accessToken && session?.user) {
-          // User is logged in
+        if (user) {
           setIsLoggedIn(true);
-          const level = await fetchAccessLevel(session.accessToken, session.user.id);
-          if (!alive) return;
-          setUserSubscription(level);
+          try {
+            const level = await getAccessLevel();
+            if (!alive) return;
+            setUserSubscription(level);
+          } catch (err) {
+            console.warn("[SpellQuiz] fetchAccessLevel error:", err);
+            setUserSubscription("free");
+          }
         } else {
-          // Anonymous user
           setIsLoggedIn(false);
           setUserSubscription("free");
         }
