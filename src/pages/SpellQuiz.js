@@ -4,9 +4,6 @@ import { supabase } from "../supabaseClient";
 import { getAccessLevel } from "../access";
 import "./SpellQuiz.css";
 
-const SUPABASE_URL = "https://wmsekzsocvmfudmjakhu.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indtc2VrenNvY3ZtZnVkbWpha2h1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0OTU1MDMsImV4cCI6MjA4NDA3MTUwM30.1xx9jyZdByOKNphMFHJ6CVOYRgv2fiH0fw-Gj2p4rlQ";
-
 function SpellQuiz() {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState({});
@@ -24,21 +21,12 @@ function SpellQuiz() {
 
     // Fetch spells WITHOUT requiring auth - works for everyone
     const fetchSpellsPublic = async () => {
-      const response = await fetch(
-        `${SUPABASE_URL}/rest/v1/spells?select=id,title,when_to_use,category,time_required,skill_level,seasonal_tags,tags,is_premium,image_url,created_at&order=created_at.desc`,
-        {
-          headers: {
-            "apikey": SUPABASE_ANON_KEY,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const { data, error } = await supabase
+        .from("spells")
+        .select("id, title, when_to_use, category, time_required, skill_level, seasonal_tags, tags, is_premium, image_url, created_at")
+        .order("created_at", { ascending: false });
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch spells: ${response.status}`);
-      }
-
-      const data = await response.json();
+      if (error) throw error;
 
       return (data || []).map((s) => ({
         id: s.id,
