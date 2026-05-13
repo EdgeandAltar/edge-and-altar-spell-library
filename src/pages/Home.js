@@ -76,7 +76,7 @@ function Home() {
             <span className="highlight">Practical Magic</span>
           </h1>
           <p className="hero-subtitle">
-            200+ curated spells for busy people. No elaborate setups. No gatekeeping.
+            250+ curated spells for busy people. No elaborate setups. No gatekeeping.
             Just real magic that fits your real life.
           </p>
 
