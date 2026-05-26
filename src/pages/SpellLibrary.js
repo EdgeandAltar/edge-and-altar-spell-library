@@ -35,16 +35,15 @@ function SpellLibrary() {
 
   const FEATURED_ORDER = useMemo(
     () => [
-      "The 'I'm Spiraling' Interrupt Knot",
-      "Burnout Recovery Sigil",
-      "Mirror Shield Visualization",
-      "Permission to Create Badly Ritual",
-      "The Starting Line Ritual",
-      "New Job Transition Blessing",
-      "Nightmare Shield Before Sleep",
-      "Grief Metabolism Ritual",
+      "The \"I'm Spiraling\" Interrupt Knot",
       "Job Interview Confidence Armor",
-      "Digital Boundary Ritual",
+      "Mirror Shield Visualization",
+      "Chamomile Calm-the-Fuck-Down Tea Ritual",
+      "Permission to Say No",
+      "Put the Phone Down (A Spell)",
+      "The Body Truce Spell",
+      "The Hard Body Day Ritual",
+      "The Glamour Spell",
     ],
     []
   );

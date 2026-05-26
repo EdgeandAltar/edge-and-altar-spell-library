@@ -1,8 +1,7 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import Stripe from "https://esm.sh/stripe@13.10.0?target=deno";
+import Stripe from "https://esm.sh/stripe@17.7.0?target=deno&no-dts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   try {
     if (req.method !== "POST") {
       return new Response("Method Not Allowed", { status: 405 });
@@ -28,7 +27,6 @@ serve(async (req) => {
       httpClient: Stripe.createFetchHttpClient(),
     });
 
-    // Read raw body for signature verification
     const body = await req.text();
     const signature = req.headers.get("stripe-signature");
 
@@ -38,7 +36,6 @@ serve(async (req) => {
 
     let event: Stripe.Event;
     try {
-      // Use constructEventAsync for Deno compatibility
       event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
     } catch (err) {
       console.error("Webhook signature verification failed:", err);
@@ -65,16 +62,16 @@ serve(async (req) => {
       }
 
       if (session.mode === "subscription") {
-        // Monthly subscription checkout
         const subscriptionId = session.subscription as string;
         const customerId = session.customer as string;
 
-        // Fetch the subscription to get current_period_end
         let periodEnd: string | null = null;
         if (subscriptionId) {
           try {
             const sub = await stripe.subscriptions.retrieve(subscriptionId);
-            periodEnd = new Date(sub.current_period_end * 1000).toISOString();
+            periodEnd = sub.current_period_end
+              ? new Date(sub.current_period_end * 1000).toISOString()
+              : null;
           } catch (err) {
             console.warn("Could not fetch subscription details:", err);
           }
@@ -101,7 +98,6 @@ serve(async (req) => {
 
         console.log(`✅ Monthly premium granted to user ${userId} via subscription ${subscriptionId}`);
       } else {
-        // One-time payment (lifetime)
         const { error } = await supabaseAdmin
           .from("profiles")
           .upsert(
@@ -131,7 +127,6 @@ serve(async (req) => {
 
       console.log("Subscription updated:", subscription.id, "status:", subscription.status, "customer:", customerId);
 
-      // Look up user by stripe_customer_id
       const { data: profile, error: lookupErr } = await supabaseAdmin
         .from("profiles")
         .select("id, subscription_type")
@@ -143,13 +138,14 @@ serve(async (req) => {
         return new Response("Profile not found", { status: 200 });
       }
 
-      // Don't downgrade lifetime users
       if (profile.subscription_type === "lifetime") {
         console.log("Skipping update for lifetime user:", profile.id);
         return new Response("ok", { status: 200 });
       }
 
-      const periodEnd = new Date(subscription.current_period_end * 1000).toISOString();
+      const periodEnd = subscription.current_period_end
+        ? new Date(subscription.current_period_end * 1000).toISOString()
+        : null;
 
       if (subscription.status === "active" || subscription.status === "trialing") {
         const { error } = await supabaseAdmin
@@ -164,7 +160,6 @@ serve(async (req) => {
         if (error) console.error("Failed to update profile (sub updated):", error);
         else console.log(`✅ Subscription updated for user ${profile.id}, expires ${periodEnd}`);
       } else if (subscription.status === "past_due") {
-        // Keep premium for now; Stripe will retry payment
         const { error } = await supabaseAdmin
           .from("profiles")
           .update({ subscription_expires_at: periodEnd })
@@ -195,7 +190,6 @@ serve(async (req) => {
         return new Response("Profile not found", { status: 200 });
       }
 
-      // Don't downgrade lifetime users
       if (profile.subscription_type === "lifetime") {
         console.log("Skipping downgrade for lifetime user:", profile.id);
         return new Response("ok", { status: 200 });
