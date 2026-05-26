@@ -230,7 +230,7 @@ function App() {
         />
 
         {/* Regular logged-in routes */}
-        <Route path="/library" element={user ? <SpellLibrary /> : <Navigate to="/login" replace />} />
+        <Route path="/library" element={<SpellLibrary />} />
         <Route path="/spell/:id" element={user ? <SpellDetail /> : <Navigate to="/login" replace />} />
         <Route path="/subscribe" element={user ? <Subscribe /> : <Navigate to="/login" replace />} />
 <Route path="/quiz" element={user ? <SpellQuiz /> : <Navigate to="/login" replace />} />

@@ -30,6 +30,8 @@ function SpellLibrary() {
   const [accessToken, setAccessToken] = useState(null);
   const [userId, setUserId] = useState(null);
   const [collectionSpellId, setCollectionSpellId] = useState(null);
+  const [showSignupPrompt, setShowSignupPrompt] = useState(false);
+  const [tokenChecked, setTokenChecked] = useState(false);
 
   const navigate = useNavigate();
 
@@ -113,6 +115,10 @@ function SpellLibrary() {
   const isFavorited = (spellId) => favorites.includes(String(spellId));
 
   const handleSpellClick = (spell) => {
+    if (!userId) {
+      setShowSignupPrompt(true);
+      return;
+    }
     if (spell.isPremium && userSubscription === "free") {
       navigate("/subscribe");
     } else {
@@ -211,6 +217,41 @@ function SpellLibrary() {
     }
   };
 
+  const fetchSpellsPublic = async () => {
+    const response = await fetch(
+      `${SUPABASE_URL}/rest/v1/spells?select=id,title,when_to_use,category,time_required,skill_level,seasonal_tags,tags,is_premium,image_url,created_at,legacy_id,created_by_user_id,is_custom&created_by_user_id=is.null&order=created_at.desc`,
+      {
+        headers: {
+          "apikey": SUPABASE_ANON_KEY,
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch spells: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return (data || []).map((s) => ({
+      id: s.id,
+      title: s.title,
+      whenToUse: s.when_to_use,
+      category: s.category,
+      timeRequired: s.time_required,
+      skillLevel: s.skill_level,
+      seasonalTags: Array.isArray(s.seasonal_tags) ? s.seasonal_tags : [],
+      tags: Array.isArray(s.tags) ? s.tags : [],
+      isPremium: Boolean(s.is_premium),
+      imageUrl: s.image_url,
+      createdAt: s.created_at,
+      legacyId: s.legacy_id,
+      createdByUserId: s.created_by_user_id,
+      isCustom: Boolean(s.is_custom),
+    }));
+  };
+
   const toggleFavorite = async (spellId, e) => {
     e.stopPropagation();
 
@@ -306,6 +347,8 @@ function SpellLibrary() {
         console.warn("[SpellLibrary] Failed to get session from storage:", err);
         setAccessToken(null);
         setUserId(null);
+      } finally {
+        setTokenChecked(true);
       }
     };
 
@@ -315,9 +358,7 @@ function SpellLibrary() {
   // ---------- Load data when token is available ----------
 
   useEffect(() => {
-    if (!accessToken || !userId) {
-      return;
-    }
+    if (!tokenChecked) return;
 
     let alive = true;
 
@@ -326,20 +367,26 @@ function SpellLibrary() {
       setPageError("");
 
       try {
-        const spellsData = await fetchSpellsDirect(accessToken, userId);
-        if (!alive) return;
+        if (accessToken && userId) {
+          const spellsData = await fetchSpellsDirect(accessToken, userId);
+          if (!alive) return;
 
-        setSpells(spellsData);
+          setSpells(spellsData);
 
-        const [level, favs] = await Promise.all([
-          fetchAccessLevelDirect(accessToken, userId),
-          fetchFavoritesDirect(accessToken, userId),
-        ]);
+          const [level, favs] = await Promise.all([
+            fetchAccessLevelDirect(accessToken, userId),
+            fetchFavoritesDirect(accessToken, userId),
+          ]);
 
-        if (!alive) return;
+          if (!alive) return;
 
-        setUserSubscription(level);
-        setFavorites(favs);
+          setUserSubscription(level);
+          setFavorites(favs);
+        } else {
+          const spellsData = await fetchSpellsPublic();
+          if (!alive) return;
+          setSpells(spellsData);
+        }
       } catch (err) {
         console.error("[SpellLibrary] load error:", err);
         if (!alive) return;
@@ -357,7 +404,7 @@ function SpellLibrary() {
     return () => {
       alive = false;
     };
-  }, [accessToken, userId]);
+  }, [accessToken, userId, tokenChecked]);
 
   // ---------- Filter ----------
   useEffect(() => {
@@ -435,7 +482,25 @@ function SpellLibrary() {
             spell{filteredSpells.length !== 1 ? "s" : ""}
           </p>
 
-          {userSubscription === "free" && (
+          {!userId ? (
+            <p style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: "14px", marginTop: "8px" }}>
+              <button
+                onClick={() => navigate("/signup")}
+                style={{
+                  background: "rgba(255, 255, 255, 0.2)",
+                  border: "1px solid rgba(255, 255, 255, 0.3)",
+                  color: "white",
+                  padding: "4px 12px",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  fontWeight: "600",
+                }}
+              >
+                Create a free account
+              </button>{" "}
+              to save favorites and track your practice. Free forever.
+            </p>
+          ) : userSubscription === "free" && (
             <p style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: "14px", marginTop: "8px" }}>
               You're viewing {filteredSpells.filter((s) => !s.isPremium).length} free spells.{" "}
               <button
@@ -537,24 +602,26 @@ function SpellLibrary() {
             </optgroup>
           </select>
 
-          <button
-            className={`filter-toggle ${showCustomOnly ? "active" : ""}`}
-            onClick={() => setShowCustomOnly(!showCustomOnly)}
-            type="button"
-            style={{
-              padding: "8px 16px",
-              background: showCustomOnly ? "#7D5E4F" : "#f5f3ef",
-              color: showCustomOnly ? "white" : "#7D5E4F",
-              border: `2px solid #7D5E4F`,
-              borderRadius: "6px",
-              cursor: "pointer",
-              fontWeight: "600",
-              fontSize: "14px",
-              transition: "all 0.2s",
-            }}
-          >
-            {showCustomOnly ? "Showing Custom Spells" : "Show My Custom Spells"}
-          </button>
+          {userId && (
+            <button
+              className={`filter-toggle ${showCustomOnly ? "active" : ""}`}
+              onClick={() => setShowCustomOnly(!showCustomOnly)}
+              type="button"
+              style={{
+                padding: "8px 16px",
+                background: showCustomOnly ? "#7D5E4F" : "#f5f3ef",
+                color: showCustomOnly ? "white" : "#7D5E4F",
+                border: `2px solid #7D5E4F`,
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontWeight: "600",
+                fontSize: "14px",
+                transition: "all 0.2s",
+              }}
+            >
+              {showCustomOnly ? "Showing Custom Spells" : "Show My Custom Spells"}
+            </button>
+          )}
 
           {(searchTerm || selectedCategory || selectedTime || selectedSkill || selectedSeason || selectedTag || selectedAccess || showCustomOnly) && (
             <button className="clear-filters" onClick={clearFilters} type="button">
@@ -592,31 +659,35 @@ function SpellLibrary() {
                   </div>
                 )}
 
-                <button
-                  className="favorite-btn"
-                  onClick={(e) => toggleFavorite(spell.id, e)}
-                  aria-label={isFavorited(spell.id) ? "Remove from favorites" : "Add to favorites"}
-                  type="button"
-                >
-                  {isFavorited(spell.id) ? (
-                    <HiHeart className="heart-icon filled" />
-                  ) : (
-                    <HiOutlineHeart className="heart-icon" />
-                  )}
-                </button>
+                {userId && (
+                  <button
+                    className="favorite-btn"
+                    onClick={(e) => toggleFavorite(spell.id, e)}
+                    aria-label={isFavorited(spell.id) ? "Remove from favorites" : "Add to favorites"}
+                    type="button"
+                  >
+                    {isFavorited(spell.id) ? (
+                      <HiHeart className="heart-icon filled" />
+                    ) : (
+                      <HiOutlineHeart className="heart-icon" />
+                    )}
+                  </button>
+                )}
 
-                <button
-                  className="collection-btn"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setCollectionSpellId(spell.id);
-                  }}
-                  aria-label="Add to collection"
-                  title="Add to Collection"
-                  type="button"
-                >
-                  <HiOutlineFolder />
-                </button>
+                {userId && (
+                  <button
+                    className="collection-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCollectionSpellId(spell.id);
+                    }}
+                    aria-label="Add to collection"
+                    title="Add to Collection"
+                    type="button"
+                  >
+                    <HiOutlineFolder />
+                  </button>
+                )}
 
                 {spell.imageUrl && (
                   <img
@@ -666,6 +737,42 @@ function SpellLibrary() {
           userId={userId}
           onClose={() => setCollectionSpellId(null)}
         />
+      )}
+
+      {showSignupPrompt && (
+        <div className="signup-prompt-overlay" onClick={() => setShowSignupPrompt(false)}>
+          <div className="signup-prompt-modal" onClick={(e) => e.stopPropagation()}>
+            <button
+              className="signup-prompt-close"
+              onClick={() => setShowSignupPrompt(false)}
+              aria-label="Close"
+              type="button"
+            >
+              ×
+            </button>
+            <h2 className="signup-prompt-headline">This spell is waiting for you.</h2>
+            <p className="signup-prompt-body">
+              Create a free account to read this spell and 250+ more. Free forever. No credit card required.
+            </p>
+            <button
+              className="signup-prompt-cta"
+              onClick={() => navigate("/signup")}
+              type="button"
+            >
+              Sign Up Free
+            </button>
+            <p className="signup-prompt-login">
+              Already have an account?{" "}
+              <button
+                onClick={() => navigate("/login")}
+                className="signup-prompt-login-link"
+                type="button"
+              >
+                Log in
+              </button>
+            </p>
+          </div>
+        </div>
       )}
     </div>
   );
