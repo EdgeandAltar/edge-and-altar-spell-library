@@ -6,6 +6,7 @@ import { supabase } from "./supabaseClient";
 import Navigation from "./components/Navigation";
 import Footer from "./components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
+import LoadingSpinner from "./components/LoadingSpinner";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Home from "./pages/Home";
@@ -40,6 +41,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminLoading, setAdminLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // ✅ remember which user we already checked admin for
   const lastAdminCheckedUserIdRef = useRef(null);
@@ -120,10 +122,12 @@ function App() {
         setUser(null);
         setIsAdmin(false);
         setAdminLoading(false);
+        setIsLoading(false);
         return;
       }
 
       await applySession(data?.session ?? null);
+      if (isMounted) setIsLoading(false);
     };
 
     init();
@@ -172,6 +176,9 @@ function App() {
       <ScrollToTop />
       <Navigation user={user} isAdmin={isAdmin} adminLoading={adminLoading} />
 
+      {isLoading ? (
+        <LoadingSpinner />
+      ) : (
       <Routes>
         <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
         <Route path="/signup" element={user ? <Navigate to="/" replace /> : <Signup />} />
@@ -249,6 +256,7 @@ function App() {
 
         <Route path="*" element={<NotFound />} />
       </Routes>
+      )}
 
       <Footer />
     </Router>
