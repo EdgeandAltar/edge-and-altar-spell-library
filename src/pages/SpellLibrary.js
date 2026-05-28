@@ -1,5 +1,6 @@
 import LoadingSpinner from "../components/LoadingSpinner";
 import React, { useEffect, useMemo, useState } from "react";
+import useOnboardingTour from "../hooks/useOnboardingTour";
 import { useNavigate } from "react-router-dom";
 import { HiOutlineHeart, HiHeart, HiLockClosed, HiOutlineFolder } from "react-icons/hi";
 import "./SpellLibrary.css";
@@ -460,6 +461,8 @@ function SpellLibrary() {
     userSubscription,
   ]);
 
+  useOnboardingTour(userId, !loading && filteredSpells.length > 0);
+
   if (loading) return <LoadingSpinner text="Loading spells..." />;
 
   return (
@@ -523,7 +526,9 @@ function SpellLibrary() {
         </div>
       </div>
 
-      <MoonPhaseWidget />
+      <div id="tour-moon-phase">
+        <MoonPhaseWidget />
+      </div>
 
       <div className="filters-section">
         <input
@@ -642,12 +647,13 @@ function SpellLibrary() {
         </div>
       ) : (
         <div className="spell-grid">
-          {filteredSpells.map((spell) => {
+          {filteredSpells.map((spell, index) => {
             const isPremiumLocked = spell.isPremium && userSubscription === "free";
 
             return (
               <div
                 key={spell.id}
+                id={index === 0 ? "tour-spell-card" : undefined}
                 className={`spell-card ${isPremiumLocked ? "premium-locked" : ""}`}
                 onClick={() => handleSpellClick(spell)}
                 style={{ cursor: "pointer", position: "relative" }}
@@ -661,6 +667,7 @@ function SpellLibrary() {
 
                 {userId && (
                   <button
+                    id={index === 0 ? "tour-favorite-btn" : undefined}
                     className="favorite-btn"
                     onClick={(e) => toggleFavorite(spell.id, e)}
                     aria-label={isFavorited(spell.id) ? "Remove from favorites" : "Add to favorites"}

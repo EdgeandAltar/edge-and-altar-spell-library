@@ -16,6 +16,31 @@ function Home() {
   const navigate = useNavigate();
   const [userSubscription, setUserSubscription] = useState("free");
 
+  // Redirect first-time users to /library so the onboarding tour can run
+  useEffect(() => {
+    let alive = true;
+
+    const checkOnboarding = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!alive || !session?.user?.id) return;
+
+      const { data } = await supabase
+        .from("profiles")
+        .select("has_seen_onboarding")
+        .eq("id", session.user.id)
+        .maybeSingle();
+
+      if (!alive) return;
+      if (data && data.has_seen_onboarding === false) {
+        navigate("/library");
+      }
+    };
+
+    checkOnboarding();
+
+    return () => { alive = false; };
+  }, [navigate]);
+
   useEffect(() => {
     let alive = true;
 

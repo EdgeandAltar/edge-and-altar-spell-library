@@ -143,13 +143,14 @@ function Navigation({ user, isAdmin, adminLoading }) {
               Browse Spells
             </button>
 
-            <button className="nav-link" onClick={() => navigate("/quiz")} type="button">
+            <button id="tour-find-spell" className="nav-link" onClick={() => navigate("/quiz")} type="button">
               Find My Spell
             </button>
 
             {/* My Library Dropdown */}
             <div className="nav-dropdown" ref={dropdownRef}>
               <button
+                id="tour-my-library"
                 className="nav-link dropdown-trigger"
                 onClick={() => setShowDropdown((v) => !v)}
                 type="button"

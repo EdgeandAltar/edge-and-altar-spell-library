@@ -1,0 +1,105 @@
+/* ── Shepherd.js onboarding tour — Edge & Altar brand theme ── */
+
+/* Tooltip card */
+.shepherd-element {
+  max-width: 300px;
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  border: 1.5px solid #c4956a;
+  background: #fdfaf6;
+  z-index: 9999;
+}
+
+.shepherd-content {
+  background: transparent;
+  border-radius: 14px;
+  padding: 0;
+}
+
+/* Arrow pointing at highlighted element */
+.shepherd-arrow::before {
+  background: #fdfaf6;
+  border-color: #c4956a;
+}
+
+/* Step text */
+.shepherd-text {
+  color: #2c1810;
+  font-size: 15px;
+  line-height: 1.6;
+  padding: 20px 22px 6px;
+  font-family: inherit;
+  background: transparent;
+}
+
+/* Footer — column layout so Next sits above Skip link */
+.shepherd-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 22px 20px;
+  background: transparent;
+  border-top: none;
+}
+
+/* Next / Finish button */
+.shepherd-button.shepherd-btn-primary {
+  background: #2c1810;
+  color: #f7f3ed;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 0;
+  width: 100%;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: background 0.2s ease;
+  font-family: inherit;
+}
+
+.shepherd-button.shepherd-btn-primary:hover {
+  background: #7b4f2e;
+}
+
+/* Skip tour link */
+.shepherd-button.shepherd-btn-skip {
+  background: none;
+  border: none;
+  color: #9b7b5e;
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+  transition: color 0.15s ease;
+}
+
+.shepherd-button.shepherd-btn-skip:hover {
+  color: #2c1810;
+}
+
+/* ── Modal overlay ── */
+.shepherd-modal-overlay-container {
+  fill: rgba(0, 0, 0, 0.6);
+}
+
+/* Prevent default shepherd bg from showing through */
+.shepherd-has-title .shepherd-content .shepherd-header {
+  background: transparent;
+  padding: 20px 22px 0;
+}
+
+.shepherd-title {
+  color: #2c1810;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+}
+
+/* Cancel icon (hidden via tour config, but just in case) */
+.shepherd-cancel-icon {
+  display: none;
+}

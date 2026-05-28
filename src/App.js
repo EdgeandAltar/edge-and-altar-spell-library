@@ -28,6 +28,8 @@ import MyCollections from "./pages/MyCollections";
 import CollectionDetail from "./pages/CollectionDetail";
 
 import "./App.css";
+import "shepherd.js/dist/css/shepherd.css";
+import "./styles/shepherd-theme.css";
 
 function InlineGateLoader({ label = "Checking access…" }) {
   return (
