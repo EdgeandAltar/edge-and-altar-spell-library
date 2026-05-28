@@ -11,7 +11,7 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  margin-bottom: 80px;
+  margin-bottom: 0;
 }
 
 .hero-image-container {
@@ -158,8 +158,8 @@
 /* Stats Section */
 .stats {
   max-width: 1000px;
-  margin: -40px auto 0;
-  padding: 0 20px 60px;
+  margin: 0 auto;
+  padding: 48px 20px 60px;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 24px;
@@ -328,7 +328,7 @@
 
   .stats {
     grid-template-columns: 1fr;
-    margin-top: -30px;
+    margin-top: 0;
   }
 
   .features-grid {

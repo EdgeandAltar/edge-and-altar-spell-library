@@ -11,6 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import { getUserSubscription } from "../userService";
 import "./Home.css";
+import TodaysSpell from "../components/TodaysSpell";
 
 function Home() {
   const navigate = useNavigate();
@@ -122,6 +123,8 @@ function Home() {
           )}
         </div>
       </section>
+
+      <TodaysSpell />
 
       {/* Stats Section */}
       <section className="stats">
