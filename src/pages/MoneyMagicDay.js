@@ -356,6 +356,15 @@ function MoneyMagicDay() {
   const isPastDay = dayNumber < (progress?.currentDay ?? 1);
   const isCurrentDay = dayNumber === (progress?.currentDay ?? 1);
 
+  const processField = (text) =>
+    (text || "").replace(/\n—/g, "\n\n—").replace(/ — /g, "\n\n— ");
+
+  const processedFocusText      = processField(dayContent.focusText);
+  const processedJournalPrompt  = processField(dayContent.journalPrompt);
+  const processedCreativeActivity = processField(dayContent.creativeActivity);
+  const processedMiniRitual     = processField(dayContent.miniRitual);
+  const processedPsychologyNote = processField(dayContent.psychologyNote);
+
   return (
     <div className="mmd-page">
       <div className="mmd-layout">
@@ -380,7 +389,9 @@ function MoneyMagicDay() {
             </div>
             <h1 className="mmd-day-title">{dayContent.title}</h1>
             {dayContent.focusText && (
-              <p className="mmd-focus-text">"{dayContent.focusText}"</p>
+              <div className="mmd-focus-text">
+                <ReactMarkdown>{processedFocusText}</ReactMarkdown>
+              </div>
             )}
           </header>
 
@@ -400,7 +411,7 @@ function MoneyMagicDay() {
               <h2 className="mmd-section-heading">Journal Prompt</h2>
             </div>
             <div className="mmd-prompt-body mmd-md">
-              <ReactMarkdown>{dayContent.journalPrompt || ""}</ReactMarkdown>
+              <ReactMarkdown>{processedJournalPrompt}</ReactMarkdown>
             </div>
             <textarea
               className="mmd-textarea"
@@ -420,7 +431,7 @@ function MoneyMagicDay() {
               <h2 className="mmd-section-heading">Creative Activity</h2>
             </div>
             <div className="mmd-prompt-body mmd-md">
-              <ReactMarkdown>{dayContent.creativeActivity || ""}</ReactMarkdown>
+              <ReactMarkdown>{processedCreativeActivity}</ReactMarkdown>
             </div>
             <textarea
               className="mmd-textarea"
@@ -440,7 +451,7 @@ function MoneyMagicDay() {
               <h2 className="mmd-section-heading">Mini-Ritual</h2>
             </div>
             <div className="mmd-ritual-body mmd-md">
-              <ReactMarkdown>{dayContent.miniRitual || ""}</ReactMarkdown>
+              <ReactMarkdown>{processedMiniRitual}</ReactMarkdown>
             </div>
           </section>
 
@@ -449,7 +460,7 @@ function MoneyMagicDay() {
             <aside className="mmd-psychology">
               <span className="mmd-psychology-icon" aria-hidden="true">🧠</span>
               <div className="mmd-psychology-body mmd-md">
-                <ReactMarkdown>{dayContent.psychologyNote || ""}</ReactMarkdown>
+                <ReactMarkdown>{processedPsychologyNote}</ReactMarkdown>
               </div>
             </aside>
           )}

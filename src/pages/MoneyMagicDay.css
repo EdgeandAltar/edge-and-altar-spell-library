@@ -97,13 +97,18 @@
   line-height: 1.15;
 }
 
-.mmd-focus-text {
+.mmd-focus-text,
+.mmd-focus-text p {
   font-family: "Cormorant Garamond", serif;
   font-size: 1.1rem;
   font-style: italic;
   color: #7b4f2e;
   margin: 0;
   line-height: 1.55;
+}
+
+.mmd-focus-text p + p {
+  margin-top: 6px;
 }
 
 /* ── Save badge ───────────────────────────────────────────────────────────── */
