@@ -1,0 +1,15 @@
+.mmr-gate {
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f7f3ef;
+}
+
+.mmr-gate-text {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 1.2rem;
+  color: #9b7b5e;
+  letter-spacing: 0.02em;
+  margin: 0;
+}

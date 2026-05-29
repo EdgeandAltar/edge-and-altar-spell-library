@@ -191,7 +191,18 @@ function Navigation({ user, isAdmin, adminLoading }) {
                     }}
                     type="button"
                   >
-                    My Journal
+                    Practice Log
+                  </button>
+
+                  <button
+                    className="dropdown-item"
+                    onClick={() => {
+                      navigate("/journal/money-magic");
+                      setShowDropdown(false);
+                    }}
+                    type="button"
+                  >
+                    Money Magic Journal
                   </button>
 
                   <button

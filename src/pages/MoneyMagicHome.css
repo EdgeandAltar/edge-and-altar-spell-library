@@ -1,0 +1,645 @@
+/* ── Page shell ───────────────────────────────────────────────────────────── */
+
+.mmh-page {
+  background: #f7f3ef;
+  min-height: 100vh;
+  padding: 56px 32px 100px;
+}
+
+.mmh-gate {
+  background: #f7f3ef;
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mmh-gate-text {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 1.2rem;
+  color: #9b7b5e;
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+
+/* ── Inner width constraint ───────────────────────────────────────────────── */
+
+.mmh-header,
+.mmh-grid,
+.mmh-wins-section,
+.mmh-refs,
+.mmh-front-matter,
+.mmh-snapshot-section,
+.mmh-transformation {
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ── Header ───────────────────────────────────────────────────────────────── */
+
+.mmh-header {
+  margin-bottom: 48px;
+  padding-bottom: 40px;
+  border-bottom: 1px solid #e0d0bc;
+}
+
+.mmh-eyebrow {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #b8935a;
+  margin: 0 0 20px;
+}
+
+.mmh-title {
+  font-family: "Cormorant Garamond", serif;
+  font-size: clamp(2.4rem, 5vw, 3.6rem);
+  font-weight: 400;
+  color: #2c1810;
+  margin: 0 0 28px;
+  line-height: 1.1;
+}
+
+/* ── Progress bar ─────────────────────────────────────────────────────────── */
+
+.mmh-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.mmh-progress-track {
+  flex: 1;
+  height: 5px;
+  background: #e8ddd0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.mmh-progress-fill {
+  height: 100%;
+  background: #c4956a;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.mmh-progress-label {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  color: #9b7b5e;
+  white-space: nowrap;
+  margin: 0;
+}
+
+/* ── Continue button ──────────────────────────────────────────────────────── */
+
+.mmh-continue-btn {
+  background: #7b4f2e;
+  color: #f7f3ef;
+  border: none;
+  border-radius: 8px;
+  padding: 14px 32px;
+  font-family: "Cormorant Garamond", serif;
+  font-size: 1.1rem;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.mmh-continue-btn:hover {
+  background: #5c3020;
+}
+
+/* ── Day grid ─────────────────────────────────────────────────────────────── */
+
+.mmh-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin-bottom: 56px;
+}
+
+/* Base card */
+.mmh-day {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-radius: 10px;
+  padding: 14px 12px 12px;
+  text-align: left;
+  min-height: 80px;
+  position: relative;
+  font-family: inherit;
+}
+
+/* Completed */
+.mmh-day--done {
+  background: #fdfaf6;
+  border: 1px solid #e8ddd0;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.mmh-day--done:hover {
+  background: #f0e8dc;
+  border-color: #c4956a;
+}
+
+/* Current */
+.mmh-day--current {
+  background: #7b4f2e;
+  border: 1px solid #7b4f2e;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.mmh-day--current:hover {
+  background: #5c3020;
+  border-color: #5c3020;
+}
+
+/* Locked */
+.mmh-day--locked {
+  background: #f2ede7;
+  border: 1px solid #ede5d8;
+  opacity: 0.5;
+}
+
+/* Day number */
+.mmh-day-num {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.mmh-day--done .mmh-day-num   { color: #9b7b5e; }
+.mmh-day--current .mmh-day-num { color: #c4956a; }
+.mmh-day--locked .mmh-day-num  { color: #b8a898; }
+
+/* Day title */
+.mmh-day-title {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 0.88rem;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.mmh-day--done .mmh-day-title    { color: #3d2010; }
+.mmh-day--current .mmh-day-title  { color: #f7f3ef; }
+
+/* Current day "Today →" label */
+.mmh-day-cta {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  color: #c4956a;
+  margin-top: auto;
+}
+
+/* Done ✦ check mark */
+.mmh-day-check {
+  position: absolute;
+  top: 10px;
+  right: 11px;
+  font-size: 0.6rem;
+  color: #c4956a;
+}
+
+/* ── Shared section heading ────────────────────────────────────────────────── */
+
+.mmh-section-heading {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #7b4f2e;
+  margin: 0;
+}
+
+/* ── Micro-wins ───────────────────────────────────────────────────────────── */
+
+.mmh-wins-section {
+  margin-bottom: 48px;
+}
+
+.mmh-wins-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.mmh-add-win-btn {
+  background: transparent;
+  border: 1.5px solid #c4956a;
+  color: #7b4f2e;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-family: "Cormorant Garamond", serif;
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.mmh-add-win-btn:hover {
+  background: #f0e8dc;
+}
+
+.mmh-wins-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mmh-win-item {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  background: #fdfaf6;
+  border: 1px solid #e8ddd0;
+  border-radius: 8px;
+  padding: 11px 16px;
+  font-size: 0.95rem;
+  color: #3d2010;
+  line-height: 1.55;
+}
+
+.mmh-win-mark {
+  font-size: 0.6rem;
+  color: #c4956a;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.mmh-wins-empty {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 1rem;
+  font-style: italic;
+  color: #9b7b5e;
+  line-height: 1.7;
+  margin: 0;
+  padding: 20px 0 4px;
+}
+
+/* ── Reference sections ───────────────────────────────────────────────────── */
+
+.mmh-refs {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 40px;
+}
+
+.mmh-refs > .mmh-section-heading {
+  margin-bottom: 12px;
+}
+
+.mmh-ref-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.mmh-ref-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fdfaf6;
+  border: 1px solid #e8ddd0;
+  border-radius: 10px;
+  padding: 13px 16px;
+  font-size: 0.9rem;
+  color: #7b4f2e;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s;
+  line-height: 1.3;
+}
+
+.mmh-ref-btn:hover {
+  background: #f0e8dc;
+  border-color: #c4956a;
+}
+
+.mmh-ref-btn--open {
+  background: #ede5d8;
+  border-color: #c4956a;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  color: #2c1810;
+}
+
+.mmh-chevron {
+  margin-left: auto;
+  font-size: 0.6rem;
+  color: #c4956a;
+}
+
+.mmh-ref-content {
+  background: #fdfaf6;
+  border: 1px solid #e8ddd0;
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+  padding: 20px 20px 16px;
+  animation: mmh-fadein 0.2s ease;
+}
+
+/* ── Reference markdown ───────────────────────────────────────────────────── */
+
+.mmh-md p { font-size: 0.9rem; color: #5a3a28; line-height: 1.75; margin: 0 0 10px; }
+.mmh-md p:last-child { margin-bottom: 0; }
+.mmh-md strong { font-weight: 600; color: #2c1810; }
+.mmh-md em { font-style: italic; }
+.mmh-md ul,
+.mmh-md ol { margin: 8px 0 12px; padding-left: 0; list-style: none; }
+.mmh-md li { margin-bottom: 6px; padding-left: 18px; position: relative; font-size: 0.9rem; color: #5a3a28; line-height: 1.65; }
+.mmh-md li::before { content: "—"; position: absolute; left: 0; color: #c4956a; }
+
+/* ── Transformation comparison section ───────────────────────────────────── */
+
+.mmh-transformation {
+  margin-bottom: 16px;
+}
+
+.mmh-transformation-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  background: #fdf7ee;
+  border: 1px solid #c4956a;
+  border-radius: 10px;
+  padding: 13px 16px;
+  font-family: "Cormorant Garamond", serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: #b8935a;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.mmh-transformation-toggle:hover {
+  background: #f0e8dc;
+}
+
+.mmh-transformation-toggle--open {
+  background: #ede5d8;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.mmh-chevron--gold {
+  color: #b8935a;
+}
+
+.mmh-transformation-body {
+  background: #fdfaf6;
+  border: 1px solid #c4956a;
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+  padding: 24px 20px 20px;
+  animation: mmh-fadein 0.2s ease;
+}
+
+.mmh-transformation-intro {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 1rem;
+  font-style: italic;
+  color: #7b4f2e;
+  line-height: 1.75;
+  margin: 0 0 24px;
+  text-align: center;
+}
+
+.mmh-transformation-pairs {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mmh-transformation-pair {
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0e8dc;
+}
+
+.mmh-transformation-pair:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.mmh-transformation-pair-label {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #b8935a;
+  margin: 0 0 8px;
+}
+
+.mmh-transformation-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.mmh-transformation-col {
+  background: #f7f3ef;
+  border: 1px solid #e8ddd0;
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.mmh-transformation-col-label {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 0.68rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #c4956a;
+  margin: 0 0 6px;
+}
+
+.mmh-transformation-answer {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 0.97rem;
+  font-style: italic;
+  color: #3d2010;
+  line-height: 1.65;
+  margin: 0;
+}
+
+@media (max-width: 600px) {
+  .mmh-transformation-cols {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Front matter & snapshot sections ────────────────────────────────────── */
+
+.mmh-front-matter,
+.mmh-snapshot-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.mmh-fm-section {
+  padding: 16px 0;
+  border-bottom: 1px solid #e8ddd0;
+}
+
+.mmh-fm-section:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.mmh-fm-section-title {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #2c1810;
+  margin: 0 0 10px;
+  letter-spacing: 0.02em;
+}
+
+.mmh-snapshot-qa {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.mmh-snapshot-item {
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0e8dc;
+}
+
+.mmh-snapshot-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.mmh-snapshot-qnum {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #b8935a;
+  margin: 0 0 4px;
+}
+
+.mmh-snapshot-q {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #3d2010;
+  margin: 0 0 8px;
+  line-height: 1.5;
+}
+
+.mmh-snapshot-a {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 1rem;
+  font-style: italic;
+  color: #7b4f2e;
+  line-height: 1.75;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.mmh-snapshot-empty {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 0.95rem;
+  font-style: italic;
+  color: #b8a898;
+}
+
+.mmh-snapshot-behaviors {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mmh-snapshot-behaviors li {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 1rem;
+  font-style: italic;
+  color: #7b4f2e;
+  line-height: 1.6;
+  padding-left: 18px;
+  position: relative;
+}
+
+.mmh-snapshot-behaviors li::before {
+  content: "—";
+  position: absolute;
+  left: 0;
+  color: #c4956a;
+}
+
+/* ── Animation ────────────────────────────────────────────────────────────── */
+
+@keyframes mmh-fadein {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Responsive ───────────────────────────────────────────────────────────── */
+
+@media (max-width: 860px) {
+  .mmh-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .mmh-page {
+    padding: 40px 20px 80px;
+  }
+
+  .mmh-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .mmh-progress-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .mmh-progress-track {
+    width: 100%;
+  }
+
+  .mmh-continue-btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .mmh-wins-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .mmh-add-win-btn {
+    width: 100%;
+    text-align: center;
+  }
+}

@@ -759,7 +759,7 @@ function SpellLibrary() {
             </button>
             <h2 className="signup-prompt-headline">This spell is waiting for you.</h2>
             <p className="signup-prompt-body">
-              Create a free account to read this spell and 250+ more. Free forever. No credit card required.
+              Create a free account to read this spell and 262 more. Free forever. No credit card required.
             </p>
             <button
               className="signup-prompt-cta"

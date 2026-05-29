@@ -26,6 +26,10 @@ import MyCustomSpells from "./pages/MyCustomSpells";
 import CustomSpellForm from "./components/CustomSpellForm";
 import MyCollections from "./pages/MyCollections";
 import CollectionDetail from "./pages/CollectionDetail";
+import MoneyMagicRouter from "./pages/MoneyMagicRouter";
+import MoneyMagicIntro from "./pages/MoneyMagicIntro";
+import MoneyMagicSnapshot from "./pages/MoneyMagicSnapshot";
+import MoneyMagicDay from "./pages/MoneyMagicDay";
 
 import "./App.css";
 import "shepherd.js/dist/css/shepherd.css";
@@ -244,6 +248,13 @@ function App() {
         <Route path="/subscribe" element={user ? <Subscribe /> : <Navigate to="/login" replace />} />
 <Route path="/quiz" element={user ? <SpellQuiz /> : <Navigate to="/login" replace />} />
         <Route path="/journal" element={user ? <SpellJournal /> : <Navigate to="/login" replace />} />
+
+        {/* Money Magic Journal */}
+        <Route path="/journal/money-magic" element={user ? <MoneyMagicRouter /> : <Navigate to="/login" replace />} />
+        <Route path="/journal/money-magic/intro" element={user ? <MoneyMagicIntro /> : <Navigate to="/login" replace />} />
+        <Route path="/journal/money-magic/snapshot/:snapshotType" element={user ? <MoneyMagicSnapshot /> : <Navigate to="/login" replace />} />
+        <Route path="/journal/money-magic/day/:dayNumber" element={user ? <MoneyMagicDay /> : <Navigate to="/login" replace />} />
+
         <Route path="/favorites" element={user ? <Favorites /> : <Navigate to="/login" replace />} />
         <Route path="/account" element={user ? <Account /> : <Navigate to="/login" replace />} />
 

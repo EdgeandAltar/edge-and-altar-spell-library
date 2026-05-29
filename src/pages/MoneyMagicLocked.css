@@ -1,0 +1,335 @@
+/* ── Page shell ──────────────────────────────────────────────────────────── */
+
+.mml-page {
+  background: #f7f3ef;
+  min-height: 100vh;
+  color: #2c1810;
+}
+
+/* ── Hero ────────────────────────────────────────────────────────────────── */
+
+.mml-hero {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 80px 24px 56px;
+  text-align: center;
+}
+
+.mml-eyebrow {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 0.85rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #b8935a;
+  margin: 0 0 20px;
+}
+
+.mml-title {
+  font-family: "Cormorant Garamond", serif;
+  font-size: clamp(2.6rem, 6vw, 4rem);
+  font-weight: 500;
+  line-height: 1.1;
+  color: #2c1810;
+  margin: 0 0 24px;
+}
+
+.mml-subtitle {
+  font-size: 1.05rem;
+  color: #7b4f2e;
+  font-style: italic;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* ── Ornamental divider ──────────────────────────────────────────────────── */
+
+.mml-divider {
+  text-align: center;
+  padding: 8px 0;
+}
+
+.mml-divider-ornament {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.5em;
+  color: #c4956a;
+}
+
+/* ── Body copy ───────────────────────────────────────────────────────────── */
+
+.mml-body-section {
+  max-width: 660px;
+  margin: 0 auto;
+  padding: 48px 24px 40px;
+}
+
+.mml-body-p {
+  font-size: 1rem;
+  color: #4a2e1e;
+  line-height: 1.8;
+  margin: 0 0 20px;
+}
+
+.mml-body-p:last-child {
+  margin-bottom: 0;
+}
+
+.mml-body-p--accent {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #2c1810;
+  font-style: italic;
+}
+
+/* ── Shared section heading ──────────────────────────────────────────────── */
+
+.mml-section-heading {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 1.75rem;
+  font-weight: 500;
+  color: #2c1810;
+  text-align: center;
+  margin: 0 0 40px;
+  letter-spacing: 0.02em;
+}
+
+/* ── What 30 days looks like ─────────────────────────────────────────────── */
+
+.mml-weeks {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 56px 24px 64px;
+}
+
+.mml-weeks-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.mml-week-card {
+  background: #fdfaf6;
+  border: 1px solid #e8ddd0;
+  border-radius: 12px;
+  padding: 28px 24px;
+}
+
+.mml-week-num {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #b8935a;
+  margin: 0 0 6px;
+}
+
+.mml-week-theme {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #2c1810;
+  margin: 0 0 10px;
+}
+
+.mml-week-desc {
+  font-size: 0.9rem;
+  color: #7b4f2e;
+  line-height: 1.65;
+  margin: 0;
+}
+
+/* ── What you get ────────────────────────────────────────────────────────── */
+
+.mml-includes {
+  background: #ede5d8;
+  padding: 56px 24px 64px;
+}
+
+.mml-includes-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 auto 24px;
+  max-width: 620px;
+}
+
+.mml-includes-item {
+  font-size: 0.95rem;
+  color: #4a2e1e;
+  padding: 10px 0;
+  border-bottom: 1px solid #d6c9b5;
+  line-height: 1.55;
+}
+
+.mml-includes-item::before {
+  content: "✦  ";
+  color: #b8935a;
+  font-size: 0.7rem;
+}
+
+.mml-includes-note {
+  font-size: 0.9rem;
+  color: #7b4f2e;
+  font-style: italic;
+  text-align: center;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+/* ── CTA section ─────────────────────────────────────────────────────────── */
+
+.mml-cta-section {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 64px 24px 80px;
+  text-align: center;
+}
+
+.mml-cta-cards {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 36px;
+}
+
+.mml-cta-card {
+  border-radius: 16px;
+  padding: 36px 32px;
+  width: 300px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mml-cta-card--premium {
+  background: #2c1810;
+  border: 1px solid #2c1810;
+  color: #f7f3ef;
+}
+
+.mml-cta-card--standalone {
+  background: #fdfaf6;
+  border: 1px solid #e8ddd0;
+  color: #2c1810;
+}
+
+.mml-cta-option-label {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #9b7b5e;
+  margin: 0;
+}
+
+.mml-cta-card--premium .mml-cta-option-label {
+  color: #c4956a;
+}
+
+.mml-cta-price {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 3.5rem;
+  font-weight: 600;
+  line-height: 1;
+  color: #2c1810;
+  margin: 0;
+}
+
+.mml-cta-card--premium .mml-cta-price {
+  color: #f7f3ef;
+}
+
+.mml-cta-price-period {
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+.mml-cta-price-alt {
+  font-size: 0.85rem;
+  color: #9b7b5e;
+  margin: -6px 0 0;
+}
+
+.mml-cta-card--premium .mml-cta-price-alt {
+  color: #c4956a;
+}
+
+.mml-cta-desc {
+  font-size: 0.9rem;
+  color: #7b4f2e;
+  line-height: 1.6;
+  margin: 0;
+  flex: 1;
+}
+
+.mml-cta-card--premium .mml-cta-desc {
+  color: #c4956a;
+}
+
+.mml-cta-btn {
+  display: block;
+  width: 100%;
+  padding: 13px 0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  transition: opacity 0.15s;
+  border: none;
+  margin-top: auto;
+}
+
+.mml-cta-btn:hover {
+  opacity: 0.85;
+}
+
+.mml-cta-btn--premium {
+  background: #b8935a;
+  color: #fff;
+}
+
+.mml-cta-btn--standalone {
+  background: transparent;
+  border: 1.5px solid #c4956a;
+  color: #7b4f2e;
+}
+
+/* ── Reassurance ─────────────────────────────────────────────────────────── */
+
+.mml-reassurance {
+  font-size: 0.88rem;
+  color: #9b7b5e;
+  line-height: 1.65;
+  margin: 0;
+}
+
+.mml-reassurance-link {
+  color: #7b4f2e;
+  text-decoration: underline;
+}
+
+.mml-reassurance-link:hover {
+  color: #2c1810;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .mml-hero {
+    padding: 56px 20px 40px;
+  }
+
+  .mml-weeks-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mml-cta-card {
+    width: 100%;
+    max-width: 360px;
+  }
+}

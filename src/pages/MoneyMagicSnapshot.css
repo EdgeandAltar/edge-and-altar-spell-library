@@ -1,0 +1,287 @@
+/* ── Page shell ──────────────────────────────────────────────────────────── */
+
+.mms-page {
+  background: #f7f3ef;
+  min-height: 100vh;
+  padding: 64px 24px 100px;
+}
+
+.mms-gate {
+  background: #f7f3ef;
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mms-gate-text {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 1.2rem;
+  color: #9b7b5e;
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+
+/* ── Header ───────────────────────────────────────────────────────────────── */
+
+.mms-header {
+  max-width: 640px;
+  margin: 0 auto 56px;
+  text-align: center;
+}
+
+.mms-eyebrow {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #b8935a;
+  margin: 0 0 20px;
+}
+
+.mms-badge {
+  display: inline-block;
+  background: #ede5d8;
+  border: 1px solid #c4956a;
+  color: #7b4f2e;
+  font-family: "Cormorant Garamond", serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 4px 14px;
+  border-radius: 20px;
+  margin-bottom: 20px;
+}
+
+.mms-title {
+  font-family: "Cormorant Garamond", serif;
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 500;
+  color: #2c1810;
+  margin: 0 0 16px;
+  line-height: 1.15;
+}
+
+.mms-subtitle {
+  font-size: 1rem;
+  color: #9b7b5e;
+  line-height: 1.75;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+/* ── Form / questions ─────────────────────────────────────────────────────── */
+
+.mms-form {
+  max-width: 640px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.mms-question {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mms-question-label {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  font-family: "Cormorant Garamond", serif;
+  font-size: 1.15rem;
+  color: #2c1810;
+  line-height: 1.4;
+  cursor: default;
+}
+
+.mms-question-number {
+  flex-shrink: 0;
+  font-family: "Cormorant Garamond", serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  color: #b8935a;
+  width: 18px;
+  text-align: right;
+  padding-top: 2px;
+}
+
+/* Notebook-style textarea: warm background, line rules, no box border */
+.mms-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  background-color: #fdfaf6;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent 27px,
+    #e4d8c8 27px,
+    #e4d8c8 28px
+  );
+  background-size: 100% 28px;
+  line-height: 28px;
+  padding: 6px 16px 6px 16px;
+  border: none;
+  border-radius: 8px;
+  outline: none;
+  font-size: 0.98rem;
+  color: #3d2010;
+  resize: vertical;
+  min-height: 116px;
+  font-family: inherit;
+  box-shadow: 0 1px 4px rgba(44, 24, 16, 0.06);
+  transition: box-shadow 0.15s;
+}
+
+.mms-textarea:focus {
+  box-shadow: 0 2px 8px rgba(44, 24, 16, 0.12);
+}
+
+.mms-textarea::placeholder {
+  color: #c4a882;
+  font-style: italic;
+}
+
+/* ── Checkbox checklist ───────────────────────────────────────────────────── */
+
+.mms-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mms-check-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fdfaf6;
+  border-radius: 8px;
+  padding: 11px 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+  user-select: none;
+}
+
+.mms-check-item:hover {
+  background: #f0e8dc;
+}
+
+.mms-check-item--checked {
+  background: #ede5d8;
+}
+
+.mms-check-input {
+  appearance: none;
+  -webkit-appearance: none;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid #c4956a;
+  border-radius: 4px;
+  background: #f7f3ef;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  position: relative;
+}
+
+.mms-check-input:checked {
+  background: #2c1810;
+  border-color: #2c1810;
+}
+
+.mms-check-input:checked::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 6px;
+  height: 10px;
+  border: 2px solid #f7f3ef;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg);
+}
+
+.mms-check-label {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 1rem;
+  color: #5a3a28;
+  line-height: 1.4;
+}
+
+.mms-check-item--checked .mms-check-label {
+  color: #2c1810;
+  font-weight: 600;
+}
+
+/* ── Submit row ───────────────────────────────────────────────────────────── */
+
+.mms-submit-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  padding-top: 8px;
+  border-top: 1px solid #e0d0bc;
+}
+
+.mms-submit-note {
+  font-size: 13px;
+  color: #9b7b5e;
+  margin: 0;
+  align-self: flex-start;
+  font-style: italic;
+  line-height: 1.6;
+}
+
+.mms-submit-btn {
+  background: #2c1810;
+  color: #f7f3ef;
+  border: none;
+  border-radius: 8px;
+  padding: 14px 32px;
+  font-family: "Cormorant Garamond", serif;
+  font-size: 1.1rem;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.mms-submit-btn:hover:not(:disabled) {
+  background: #7b4f2e;
+}
+
+.mms-submit-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ── Error ────────────────────────────────────────────────────────────────── */
+
+.mms-error {
+  font-size: 0.9rem;
+  color: #c0392b;
+  background: #fdf0ee;
+  border: 1px solid #f0c0b8;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 0;
+}
+
+/* ── Responsive ───────────────────────────────────────────────────────────── */
+
+@media (max-width: 680px) {
+  .mms-page {
+    padding: 48px 20px 80px;
+  }
+
+  .mms-submit-row {
+    align-items: stretch;
+  }
+
+  .mms-submit-btn {
+    text-align: center;
+  }
+}

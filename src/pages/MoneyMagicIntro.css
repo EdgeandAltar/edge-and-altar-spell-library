@@ -1,0 +1,207 @@
+/* ── Page shell ──────────────────────────────────────────────────────────── */
+
+.mmi-page {
+  background: #f7f3ef;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 56px 24px 80px;
+}
+
+.mmi-gate {
+  background: #f7f3ef;
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mmi-gate-text {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 1.2rem;
+  color: #9b7b5e;
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+
+/* ── Eyebrow ──────────────────────────────────────────────────────────────── */
+
+.mmi-eyebrow {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #b8935a;
+  margin: 0 0 36px;
+}
+
+/* ── Progress dots ────────────────────────────────────────────────────────── */
+
+.mmi-dots {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 48px;
+}
+
+.mmi-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #e0d4c3;
+  transition: background 0.25s, transform 0.25s;
+}
+
+.mmi-dot--done {
+  background: #c4956a;
+}
+
+.mmi-dot--active {
+  background: #2c1810;
+  transform: scale(1.3);
+}
+
+/* ── Section card ─────────────────────────────────────────────────────────── */
+
+.mmi-card {
+  width: 100%;
+  max-width: 640px;
+  background: #fdfaf6;
+  border-radius: 16px;
+  border: 1px solid #e8ddd0;
+  padding: 52px 52px 44px;
+  animation: mmi-fadein 0.4s ease both;
+}
+
+@keyframes mmi-fadein {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mmi-counter {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #c4956a;
+  margin: 0 0 16px;
+}
+
+.mmi-section-title {
+  font-family: "Cormorant Garamond", serif;
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  font-weight: 500;
+  color: #2c1810;
+  line-height: 1.15;
+  margin: 0 0 28px;
+}
+
+/* ── Markdown content ─────────────────────────────────────────────────────── */
+
+.mm-intro-content p { font-size: 1.05rem; color: #5a3a28; margin-bottom: 16px; line-height: 1.8; }
+.mm-intro-content p:last-child { margin-bottom: 0; }
+.mm-intro-content strong { font-weight: 600; color: #2c1810; }
+.mm-intro-content em { font-style: italic; }
+.mm-intro-content ul,
+.mm-intro-content ol { margin: 12px 0 16px; padding-left: 0; list-style: none; }
+.mm-intro-content li { margin-bottom: 8px; padding-left: 20px; position: relative; line-height: 1.7; font-size: 1.05rem; color: #5a3a28; }
+.mm-intro-content li::before { content: "—"; position: absolute; left: 0; color: #c4956a; }
+.mm-intro-content h2,
+.mm-intro-content h3 { font-family: "Cormorant Garamond", serif; font-weight: 500; color: #2c1810; margin: 24px 0 12px; }
+.mm-intro-content h2 { font-size: 1.5rem; }
+.mm-intro-content h3 { font-size: 1.2rem; }
+
+/* ── Privacy note ─────────────────────────────────────────────────────────── */
+
+.mmi-privacy-note {
+  width: 100%;
+  max-width: 640px;
+  font-size: 13px;
+  color: #9b7b5e;
+  font-style: italic;
+  text-align: center;
+  line-height: 1.6;
+  margin: 0 0 16px;
+}
+
+/* ── Footer / button ──────────────────────────────────────────────────────── */
+
+.mmi-footer {
+  width: 100%;
+  max-width: 640px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 24px;
+}
+
+.mmi-footer--split {
+  justify-content: space-between;
+}
+
+.mmi-back-btn {
+  background: none;
+  border: none;
+  color: #7b4f2e;
+  font-family: "Cormorant Garamond", serif;
+  font-size: 1rem;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  padding: 4px 0;
+  text-decoration: none;
+  transition: text-decoration 0.15s;
+}
+
+.mmi-back-btn:hover {
+  text-decoration: underline;
+}
+
+.mmi-continue-btn {
+  background: #2c1810;
+  color: #f7f3ef;
+  border: none;
+  border-radius: 8px;
+  padding: 13px 28px;
+  font-family: "Cormorant Garamond", serif;
+  font-size: 1.05rem;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.mmi-continue-btn:hover {
+  background: #7b4f2e;
+}
+
+/* ── Responsive ───────────────────────────────────────────────────────────── */
+
+@media (max-width: 700px) {
+  .mmi-card {
+    padding: 36px 28px 32px;
+  }
+
+  .mmi-footer {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .mmi-footer--split {
+    justify-content: center;
+  }
+
+  .mmi-continue-btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .mmi-back-btn {
+    text-align: center;
+  }
+}
